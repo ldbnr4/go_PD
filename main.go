@@ -7,7 +7,7 @@ import (
 
 func main() {
 
-	mangoMango()
+	//mangoMango()
 	router := NewRouter()
 
 	log.Fatal(http.ListenAndServe(":8081", router))

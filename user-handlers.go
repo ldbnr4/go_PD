@@ -8,6 +8,19 @@ import (
 	"net/http"
 )
 
+/***********
+ * STRUCTS *
+ ***********/
+type AddUserMsg struct {
+	Username string
+	Password string
+	Email    string
+	Nickname string
+}
+
+/************
+ * HANDLERS *
+ ************/
 func UserCreate(w http.ResponseWriter, r *http.Request) {
 
 	var msg AddUserMsg
@@ -29,8 +42,7 @@ func UserCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//TODO: Call a function that inserts a new User into the mongoDb and returns the Id string
-	uid := "<user_id>"
+	uid := InsertUser(msg).Hex()
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(uid); err != nil {
 		panic(err)
