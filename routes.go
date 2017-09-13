@@ -25,10 +25,10 @@ var routes = Routes{
 		TodoIndex,
 	},
 	Route{
-		"TodoCreate",
+		"AlbumCreate",
 		"POST",
-		"/todos",
-		TodoCreate,
+		"/album",
+		AlbumCreate,
 	},
 	Route{
 		"TodoShow",

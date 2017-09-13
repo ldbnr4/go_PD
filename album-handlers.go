@@ -11,19 +11,15 @@ import (
 /***********
  * STRUCTS *
  ***********/
-type AddUserMsg struct {
-	Username string
-	Password string
-	Email    string
-	Nickname string
+type AddAlbumMsg struct{
+	Title	string
+	UserId	string
 }
-
 /************
  * HANDLERS *
  ************/
-func UserCreate(w http.ResponseWriter, r *http.Request) {
-
-	var msg AddUserMsg
+func AlbumCreate(w http.ResponseWriter, r *http.Request) {
+	var msg AddAlbumMsg
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 100))
 	if err != nil {
 		panic(err)
@@ -41,11 +37,10 @@ func UserCreate(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 	}
-
-	uid := InsertUser(msg).Hex()
+		
+	uid :=  InsertAlbum(msg)
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(uid); err != nil {
 		panic(err)
 	}
-
 }

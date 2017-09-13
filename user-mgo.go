@@ -1,22 +1,22 @@
 package main
 
 import (
-//	"fmt"
+	//	"fmt"
 	"gopkg.in/mgo.v2"
-	"time"
 	"gopkg.in/mgo.v2/bson"
-//	"log"
+	"time"
+	//	"log"
 )
 
 type User struct {
-	bson.ObjectId `_id`		
+	bson.ObjectId `_id`
 	AddUserMsg
-	Joined	string
+	Joined                      string
 	Friends, Albums, FriendReqs []string
 }
 
-func newUser(msg AddUserMsg) User{
-	newU := User{AddUserMsg:msg, Joined:time.Now().UTC().String()}
+func newUser(msg AddUserMsg) User {
+	newU := User{AddUserMsg: msg, Joined: time.Now().UTC().String()}
 	newU.ObjectId = bson.NewObjectId()
 	return newU
 }
@@ -33,11 +33,11 @@ func InsertUser(msg AddUserMsg) bson.ObjectId {
 
 	c := session.DB("test").C("accnts")
 	newUser := newUser(msg)
-	
+
 	err = c.Insert(newUser)
 	if err != nil {
 		panic(err)
 	}
 
-	return newUser.ObjectId 
+	return newUser.ObjectId
 }
