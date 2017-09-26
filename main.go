@@ -5,10 +5,10 @@ import (
 	"net/http"
 )
 
+const PrjDir = "/home/fredfreeman/Apps/PD/"
+
 func main() {
 
-	//mangoMango()
 	router := NewRouter()
-
-	log.Fatal(http.ListenAndServe(":8081", router))
+	defer log.Fatal(http.ListenAndServe(":2500", router))
 }

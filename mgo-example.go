@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
+
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"log"
 )
 
 type Person struct {
@@ -20,7 +21,7 @@ func mangoMango() {
 	defer session.Close()
 
 	// Optional. Switch the session to a monotonic behavior.
-	session.SetMode(mgo.Monotonic, true)
+	// session.SetMode(mgo.Monotonic, true)
 
 	c := session.DB("test").C("people")
 	err = c.Insert(&Person{"Ale", "+55 53 8116 9639"},

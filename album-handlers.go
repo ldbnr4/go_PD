@@ -3,44 +3,64 @@ package main
 import (
 	"encoding/json"
 	//"fmt"
-	"io"
-	"io/ioutil"
+
 	"net/http"
 )
 
 /***********
  * STRUCTS *
  ***********/
-type AddAlbumMsg struct{
-	Title	string
-	UserId	string
+type AddAlbumMsg struct {
+	Title  string
+	UserId string
 }
+
+type AddAlbumResp struct {
+	Title string
+	ID    string
+}
+
+type GetAlbumResp struct {
+	PhotoIDs []string
+}
+
+type AlbumMsgToken struct {
+	UserId  string
+	AlbumId string
+}
+
 /************
  * HANDLERS *
  ************/
 func AlbumCreate(w http.ResponseWriter, r *http.Request) {
-	var msg AddAlbumMsg
-	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 100))
-	if err != nil {
-		panic(err)
-	}
+	msg := new(AddAlbumMsg)
+
+	FillStruct(r, msg)
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	if err := r.Body.Close(); err != nil {
-		panic(err)
-	}
-
-	if err := json.Unmarshal(body, &msg); err != nil {
-		w.WriteHeader(422)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			panic(err)
-		}
-	}
-		
-	uid :=  InsertAlbum(msg)
+	aid := InsertAlbum(*msg)
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(uid); err != nil {
-		panic(err)
-	}
+	ifErr(json.NewEncoder(w).Encode(&AddAlbumResp{ID: aid, Title: msg.Title}))
+}
+
+func AlbumDelete(w http.ResponseWriter, r *http.Request) {
+	msg := new(AlbumMsgToken)
+	FillStruct(r, msg)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	RemoveAlbum(*msg)
+
+}
+
+func GetAlbum(w http.ResponseWriter, r *http.Request) {
+	msg := new(AlbumMsgToken)
+
+	msg.AlbumId = r.URL.Query().Get("AlbumId")
+	msg.UserId = r.URL.Query().Get("UserId")
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	pids := GetAlbumPhotos(*msg)
+	ifErr(json.NewEncoder(w).Encode(&GetAlbumResp{PhotoIDs: pids}))
 }

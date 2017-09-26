@@ -42,4 +42,28 @@ var routes = Routes{
 		"/user",
 		UserCreate,
 	},
+	Route{
+		"PhotoCreate",
+		"POST",
+		"/photo",
+		PhotoCreate,
+	},
+	Route{
+		"UserDelete",
+		"POST",
+		"/del/user",
+		UserDelete,
+	},
+	Route{
+		"GetAlbum",
+		"GET",
+		"/album",
+		GetAlbum,
+	},
+	Route{
+		"GetPhoto",
+		"GET",
+		"/photo",
+		GetPhoto,
+	},
 }

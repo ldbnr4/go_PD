@@ -3,9 +3,8 @@ package main
 import (
 	"encoding/json"
 	//"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
+	"os"
 )
 
 /***********
@@ -18,34 +17,36 @@ type AddUserMsg struct {
 	Nickname string
 }
 
+type AddUserResp struct {
+	Id string
+}
+
+type DelUserMsg struct {
+	Id       string
+	Password string
+}
+
 /************
  * HANDLERS *
  ************/
 func UserCreate(w http.ResponseWriter, r *http.Request) {
 
-	var msg AddUserMsg
-	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 100))
-	if err != nil {
-		panic(err)
-	}
+	msg := new(AddUserMsg)
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	FillStruct(r, msg)
 
-	if err := r.Body.Close(); err != nil {
-		panic(err)
-	}
+	uid := InsertUser(*msg).Hex()
+	ifErr(os.MkdirAll(PrjDir+uid, os.ModePerm))
 
-	if err := json.Unmarshal(body, &msg); err != nil {
-		w.WriteHeader(422)
-		if err := json.NewEncoder(w).Encode(err); err != nil {
-			panic(err)
-		}
-	}
-
-	uid := InsertUser(msg).Hex()
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(uid); err != nil {
-		panic(err)
-	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	ifErr(json.NewEncoder(w).Encode(AddUserResp{uid}))
+}
 
+func UserDelete(w http.ResponseWriter, r *http.Request) {
+	msg := new(DelUserMsg)
+	FillStruct(r, msg)
+	// ifErr(os.RemoveAll(PrjDir + msg.Id))
+	RemoveUser(*msg)
+	ifErr(json.NewEncoder(w).Encode("Completed"))
 }
