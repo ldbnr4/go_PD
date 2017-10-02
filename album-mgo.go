@@ -76,7 +76,7 @@ func RemoveAlbum(msg AlbumMsgToken) {
 
 	DeletePhotosFrmAlbum(albumObj)
 
-	ifErr(albumC.RemoveId(msg.AlbumId))
+	ifErr(albumC.RemoveId(bson.ObjectIdHex(msg.AlbumId)))
 }
 
 func GetAlbumPhotos(msg AlbumMsgToken) []string {

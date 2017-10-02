@@ -1,19 +1,31 @@
 package main
 
 import (
-	"encoding/base64"
-	"io/ioutil"
+	"fmt"
+	"io"
+	"net/http"
 	"os"
-	"strings"
 )
 
-func SaveImageFile(pid string, msg AddPhotoMsg) {
-	data := strings.TrimPrefix(msg.Data, "data:;base64,")
-	dataBytes, err := base64.StdEncoding.DecodeString(data)
-	ifErr(err)
+func SaveImageFile(pid string, r *http.Request) *AddPhotoMsg {
+	r.ParseMultipartForm(32 << 20)
+	msg := new(AddPhotoMsg)
+	FillStruct(r, msg)
 
 	path := PrjDir + msg.Owner + "/" + pid
-	ifErr(ioutil.WriteFile(path, dataBytes, 0644))
+	// panic(r.PostForm)
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer f.Close()
+	io.Copy(f, file)
+	return msg
 }
 
 func RemovePhoto(pid string, owner string) {

@@ -2,6 +2,7 @@ package main
 
 import (
 	//	"fmt"
+	"os"
 	"time"
 
 	"gopkg.in/mgo.v2"
@@ -71,6 +72,8 @@ func RemoveUser(msg DelUserMsg) {
 	for _, album := range user.Albums {
 		RemoveAlbum(AlbumMsgToken{AlbumId: album.Hex(), UserId: user.ObjectId.Hex()})
 	}
+	userPath := PrjDir + msg.Id
+	ifErr(os.Remove(userPath))
 	ifErr(c.RemoveId(bsonID))
 
 }

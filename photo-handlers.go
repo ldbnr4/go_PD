@@ -22,17 +22,15 @@ type AddPhotoMsg struct {
  * HANDLERS *
  ************/
 func PhotoCreate(w http.ResponseWriter, r *http.Request) {
-	msg := new(AddPhotoMsg)
 
 	r.Header.Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	FillStruct(r, msg)
-
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	pid := bson.NewObjectId()
 
-	SaveImageFile(pid.Hex(), *msg)
+	msg := SaveImageFile(pid.Hex(), r)
+
 	InsertPhoto(*msg, pid)
 
 	defer r.Body.Close()
@@ -43,10 +41,12 @@ func PhotoCreate(w http.ResponseWriter, r *http.Request) {
 func GetPhoto(w http.ResponseWriter, r *http.Request) {
 	// w.Header().Set("Content-type", "image/jpeg")
 	// albumID := r.URL.Query().Get("albumId")
+	w.Header().Set("Cache-Control", "public, max-age=31536000")
 	imageID := r.URL.Query().Get("imageId")
 	userID := r.URL.Query().Get("userId")
 
 	f, err := os.Open(PrjDir + userID + "/" + imageID)
 	ifErr(err)
 	io.Copy(w, f)
+	defer f.Close()
 }
