@@ -11,11 +11,11 @@ import (
 
 //Album that is stored in the DB
 type Album struct {
-	bson.ObjectId        "_id"
-	Title                string
-	Host                 bson.ObjectId
-	Creation             time.Time
-	Photos, Tags, Guests []bson.ObjectId
+	bson.ObjectId "_id"
+	Title         string
+	Host          bson.ObjectId
+	Creation      time.Time
+	Photos, Guest []bson.ObjectId
 }
 
 func newAlbum(msg AddAlbumMsg) Album {
@@ -100,16 +100,7 @@ func GetAlbumPhotos(msg AlbumMsgToken) []string {
 
 	ifErr(albumC.FindId(albumObjID).One(&albumObj))
 
-	var allowed bool
-
-	for _, guest := range albumObj.Guests {
-		if guest.Hex() == msg.AlbumId {
-			allowed = true
-			break
-		}
-	}
-
-	if !allowed && albumObj.Host.Hex() != msg.UserId {
+	if !onTheGuestList(albumObj, msg.AlbumId) && albumObj.Host.Hex() != msg.UserId {
 		panic("No access rights")
 	}
 

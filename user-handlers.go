@@ -26,6 +26,11 @@ type DelUserMsg struct {
 	Password string
 }
 
+type LoginMsg struct {
+	Username string
+	Password string
+}
+
 /************
  * HANDLERS *
  ************/
@@ -46,7 +51,13 @@ func UserCreate(w http.ResponseWriter, r *http.Request) {
 func UserDelete(w http.ResponseWriter, r *http.Request) {
 	msg := new(DelUserMsg)
 	FillStruct(r, msg)
-	// ifErr(os.RemoveAll(PrjDir + msg.Id))
 	RemoveUser(*msg)
 	ifErr(json.NewEncoder(w).Encode("Completed"))
+}
+
+func Login(w http.ResponseWriter, r *http.Request) {
+	msg := new(LoginMsg)
+	FillStruct(r, msg)
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	ifErr(json.NewEncoder(w).Encode(RetrieveUser(*msg)))
 }

@@ -46,7 +46,6 @@ func InsertUser(msg AddUserMsg) bson.ObjectId {
 }
 
 func RemoveUser(msg DelUserMsg) {
-
 	session, err := mgo.Dial("localhost:27012")
 	ifErr(err)
 	defer session.Close()
@@ -73,7 +72,27 @@ func RemoveUser(msg DelUserMsg) {
 		RemoveAlbum(AlbumMsgToken{AlbumId: album.Hex(), UserId: user.ObjectId.Hex()})
 	}
 	userPath := PrjDir + msg.Id
-	ifErr(os.Remove(userPath))
+	ifErr(os.RemoveAll(userPath))
 	ifErr(c.RemoveId(bsonID))
+}
 
+func RetrieveUser(msg LoginMsg) *interface{} {
+	session, err := mgo.Dial("localhost:27012")
+	ifErr(err)
+	defer session.Close()
+
+	// Optional. Switch the session to a monotonic behavior.
+	// session.SetMode(mgo.Monotonic, true)
+
+	c := session.DB("test").C("accnts")
+
+	foundUser := new(interface{})
+
+	c.Find(bson.M{"username": msg.Username, "password": msg.Password}).One(foundUser)
+	// panic(*foundUser)
+
+	if foundUser == nil {
+		panic("No user found")
+	}
+	return foundUser
 }

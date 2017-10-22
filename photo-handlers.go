@@ -15,7 +15,11 @@ import (
 type AddPhotoMsg struct {
 	Album string
 	Owner string
-	Data  string
+}
+
+type DelPhotoMsg struct {
+	UID string
+	PID string
 }
 
 /************
@@ -49,4 +53,11 @@ func GetPhoto(w http.ResponseWriter, r *http.Request) {
 	ifErr(err)
 	io.Copy(w, f)
 	defer f.Close()
+}
+
+func PhotoDelete(w http.ResponseWriter, r *http.Request) {
+	msg := new(DelPhotoMsg)
+	FillStruct(r, msg)
+	DeletePhoto(*msg)
+	ifErr(json.NewEncoder(w).Encode("Completed"))
 }

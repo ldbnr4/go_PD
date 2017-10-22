@@ -28,8 +28,7 @@ func SaveImageFile(pid string, r *http.Request) *AddPhotoMsg {
 	return msg
 }
 
-func RemovePhoto(pid string, owner string) {
-	//TODO: implement this
+func FSRemovePhoto(pid string, owner string) {
 	switch {
 	case pid == "":
 		panic("RemovePhoto: empty pid")
