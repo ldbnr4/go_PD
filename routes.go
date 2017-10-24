@@ -1,6 +1,9 @@
 package main
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 type Route struct {
 	Name        string
@@ -19,28 +22,46 @@ var routes = Routes{
 		Index,
 	},
 	Route{
-		"TodoIndex",
-		"GET",
-		"/todos",
-		TodoIndex,
-	},
-	Route{
 		"AlbumCreate",
 		"POST",
 		"/album",
 		AlbumCreate,
 	},
 	Route{
-		"TodoShow",
+		"AlbumDelete",
+		"POST",
+		"/del/album",
+		AlbumDelete,
+	},
+	Route{
+		"GetAlbum",
 		"GET",
-		"/todos/{todoId}",
-		TodoShow,
+		"/album",
+		GetAlbum,
+	},
+	Route{
+		"GetAlbums",
+		"GET",
+		"/albums/{UID}",
+		GetAlbums,
+	},
+	Route{
+		"ProfPic",
+		"GET",
+		"/user/{UID}",
+		ProfPic,
 	},
 	Route{
 		"UserCreate",
 		"POST",
 		"/user",
 		UserCreate,
+	},
+	Route{
+		"UserDelete",
+		"POST",
+		"/del/user",
+		UserDelete,
 	},
 	Route{
 		"PhotoCreate",
@@ -55,22 +76,17 @@ var routes = Routes{
 		PhotoDelete,
 	},
 	Route{
-		"UserDelete",
-		"POST",
-		"/del/user",
-		UserDelete,
-	},
-	Route{
-		"GetAlbum",
-		"GET",
-		"/album",
-		GetAlbum,
-	},
-	Route{
 		"GetPhoto",
 		"GET",
 		"/photo",
 		GetPhoto,
+	},
+
+	Route{
+		"DevPhoto",
+		"GET",
+		"/dev/photo",
+		DevPhoto,
 	},
 	Route{
 		"Login",
@@ -78,4 +94,8 @@ var routes = Routes{
 		"/login",
 		Login,
 	},
+}
+
+func Index(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "Welcome!\n")
 }

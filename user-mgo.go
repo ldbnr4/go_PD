@@ -10,14 +10,21 @@ import (
 	//	"log"
 )
 
+//User ...
 type User struct {
-	bson.ObjectId               "_id"
-	Username                    string
-	Email                       string
-	Password                    string
-	Nickname                    string
-	Joined                      string
-	Friends, Albums, FriendReqs []bson.ObjectId
+	bson.ObjectId                       "_id"
+	Username                            string
+	Email                               string
+	Password                            string
+	Nickname                            string
+	Joined                              string
+	Friends, Albums, FriendReqs, Tagged []bson.ObjectId
+}
+
+//CreateUserError ...
+type CreateUserError struct {
+	Username bool
+	Email    bool
 }
 
 func newUser(msg AddUserMsg) User {
@@ -30,19 +37,37 @@ func newUser(msg AddUserMsg) User {
 	return newU
 }
 
-func InsertUser(msg AddUserMsg) bson.ObjectId {
+func checkUserExist(username string, email string) CreateUserError {
 	session, err := mgo.Dial("localhost:27012")
 	ifErr(err)
 	defer session.Close()
 
-	// Optional. Switch the session to a monotonic behavior.
-	// session.SetMode(mgo.Monotonic, true)
+	c := session.DB("test").C("accnts")
+
+	usernameFind := new(User)
+	emailFind := new(User)
+
+	c.Find(bson.M{"username": username}).One(usernameFind)
+	c.Find(bson.M{"email": email}).One(emailFind)
+
+	return CreateUserError{Username: (usernameFind.ObjectId.Hex() != ""), Email: (emailFind.ObjectId.Hex() != "")}
+}
+
+//InsertUser ...
+func InsertUser(msg AddUserMsg) AddUserResp {
+	session, err := mgo.Dial("localhost:27012")
+	ifErr(err)
+	defer session.Close()
 
 	c := session.DB("test").C("accnts")
 	newUser := newUser(msg)
 
-	ifErr(c.Insert(newUser))
-	return newUser.ObjectId
+	userDBCheck := checkUserExist(msg.Username, msg.Email)
+
+	if !userDBCheck.Username && !userDBCheck.Email {
+		ifErr(c.Insert(newUser))
+	}
+	return AddUserResp{ID: newUser.ObjectId.Hex(), Error: userDBCheck}
 }
 
 func RemoveUser(msg DelUserMsg) {
@@ -52,7 +77,7 @@ func RemoveUser(msg DelUserMsg) {
 
 	// session.SetMode(mgo.Monotonic, true)
 
-	bsonID := bson.ObjectIdHex(msg.Id)
+	bsonID := bson.ObjectIdHex(msg.ID)
 
 	var user User
 
@@ -69,20 +94,18 @@ func RemoveUser(msg DelUserMsg) {
 	}
 
 	for _, album := range user.Albums {
-		RemoveAlbum(AlbumMsgToken{AlbumId: album.Hex(), UserId: user.ObjectId.Hex()})
+		RemoveAlbum(AlbumMsgToken{AID: album.Hex(), UID: user.ObjectId.Hex()})
 	}
-	userPath := PrjDir + msg.Id
+	userPath := PrjDir + msg.ID
 	ifErr(os.RemoveAll(userPath))
 	ifErr(c.RemoveId(bsonID))
 }
 
+//RetrieveUser ...
 func RetrieveUser(msg LoginMsg) *interface{} {
 	session, err := mgo.Dial("localhost:27012")
 	ifErr(err)
 	defer session.Close()
-
-	// Optional. Switch the session to a monotonic behavior.
-	// session.SetMode(mgo.Monotonic, true)
 
 	c := session.DB("test").C("accnts")
 
@@ -95,4 +118,35 @@ func RetrieveUser(msg LoginMsg) *interface{} {
 		panic("No user found")
 	}
 	return foundUser
+}
+
+//GetUserAlbums ...
+func GetUserAlbums(uid string) GetAlbumsResp {
+	session, err := mgo.Dial("localhost:27012")
+	ifErr(err)
+	defer session.Close()
+
+	c := session.DB("test").C("accnts")
+
+	foundUser := new(User)
+
+	ifErr(c.Find(bson.M{"_id": bson.ObjectIdHex(uid)}).One(foundUser))
+	a := session.DB("test").C("albums")
+
+	list := foundUser.Albums
+	taggedList := foundUser.Tagged
+	created := make([]GetAlbumResp, len(list))
+	album := new(Album)
+	for i, albumID := range list {
+		ifErr(a.Find(bson.M{"_id": albumID}).One(album))
+		created[i] = GetAlbumResp{Title: album.Title, ID: albumID.Hex()}
+	}
+
+	tagged := make([]GetAlbumResp, len(taggedList))
+	for i, albumID := range taggedList {
+		ifErr(a.Find(bson.M{"_id": albumID}).One(album))
+		tagged[i] = GetAlbumResp{Title: album.Title, ID: albumID.Hex()}
+	}
+
+	return GetAlbumsResp{Created: created, Tagged: tagged}
 }

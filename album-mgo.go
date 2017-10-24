@@ -51,9 +51,9 @@ func InsertAlbum(msg AddAlbumMsg) string {
 //RemoveAlbum removes an album from the DB
 func RemoveAlbum(msg AlbumMsgToken) {
 	switch {
-	case msg.UserId == "":
+	case msg.UID == "":
 		panic("empty user id")
-	case msg.AlbumId == "":
+	case msg.AID == "":
 		panic("empty album id")
 	}
 
@@ -66,24 +66,24 @@ func RemoveAlbum(msg AlbumMsgToken) {
 	db := session.DB("test")
 
 	albumC := db.C("albums")
-	albumObjID := bson.ObjectIdHex(msg.AlbumId)
+	albumObjID := bson.ObjectIdHex(msg.AID)
 
 	var albumObj Album
 
 	ifErr(albumC.FindId(albumObjID).One(&albumObj))
 
-	mgoRmFrmSetID(db.C("accnts"), bson.ObjectIdHex(msg.UserId), "albums", albumObjID)
+	mgoRmFrmSetID(db.C("accnts"), bson.ObjectIdHex(msg.UID), "albums", albumObjID)
 
 	DeletePhotosFrmAlbum(albumObj)
 
-	ifErr(albumC.RemoveId(bson.ObjectIdHex(msg.AlbumId)))
+	ifErr(albumC.RemoveId(bson.ObjectIdHex(msg.AID)))
 }
 
 func GetAlbumPhotos(msg AlbumMsgToken) []string {
 	switch {
-	case msg.AlbumId == "":
+	case msg.AID == "":
 		panic("Empty AlbumId in GetAlbumPhotos")
-	case msg.UserId == "":
+	case msg.UID == "":
 		panic("Empty UserId in GetAlbumPhotos")
 	}
 
@@ -94,13 +94,13 @@ func GetAlbumPhotos(msg AlbumMsgToken) []string {
 	db := session.DB("test")
 
 	albumC := db.C("albums")
-	albumObjID := bson.ObjectIdHex(msg.AlbumId)
+	albumObjID := bson.ObjectIdHex(msg.AID)
 
 	var albumObj Album
 
 	ifErr(albumC.FindId(albumObjID).One(&albumObj))
 
-	if !onTheGuestList(albumObj, msg.AlbumId) && albumObj.Host.Hex() != msg.UserId {
+	if !onTheGuestList(albumObj, msg.AID) && albumObj.Host.Hex() != msg.UID {
 		panic("No access rights")
 	}
 
