@@ -81,18 +81,23 @@ var routes = Routes{
 		"/photo",
 		GetPhoto,
 	},
-
 	Route{
-		"DevPhoto",
+		"DevHero",
 		"GET",
-		"/dev/photo",
-		DevPhoto,
+		"/dev/hero/{hero}",
+		DevHero,
 	},
 	Route{
 		"Login",
 		"POST",
 		"/login",
 		Login,
+	},
+	Route{
+		"GetFriends",
+		"GET",
+		"/friends/{UID}",
+		GetFriends,
 	},
 }
 

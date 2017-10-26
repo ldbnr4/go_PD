@@ -125,12 +125,10 @@ func GetUserAlbums(uid string) GetAlbumsResp {
 	session, err := mgo.Dial("localhost:27012")
 	ifErr(err)
 	defer session.Close()
-
 	c := session.DB("test").C("accnts")
-
 	foundUser := new(User)
-
 	ifErr(c.Find(bson.M{"_id": bson.ObjectIdHex(uid)}).One(foundUser))
+
 	a := session.DB("test").C("albums")
 
 	list := foundUser.Albums
@@ -149,4 +147,42 @@ func GetUserAlbums(uid string) GetAlbumsResp {
 	}
 
 	return GetAlbumsResp{Created: created, Tagged: tagged}
+}
+
+//GetFriendReqs ...
+func GetFriendReqs(uid string) []SimpleUser {
+	session, err := mgo.Dial("localhost:27012")
+	ifErr(err)
+	defer session.Close()
+	c := session.DB("test").C("accnts")
+	foundUser := new(User)
+	ifErr(c.Find(bson.M{"_id": bson.ObjectIdHex(uid)}).One(foundUser))
+
+	var results []SimpleUser
+	foundFriendReq := new(User)
+	for _, friendReqID := range foundUser.FriendReqs {
+		ifErr(c.Find(bson.M{"_id": friendReqID}).One(foundFriendReq))
+		results = append(results, SimpleUser{Name: foundFriendReq.Nickname, ID: friendReqID.Hex()})
+	}
+
+	return results
+}
+
+//GetFriendsMgo ...
+func GetFriendsMgo(uid string) []SimpleUser {
+	session, err := mgo.Dial("localhost:27012")
+	ifErr(err)
+	defer session.Close()
+	c := session.DB("test").C("accnts")
+	foundUser := new(User)
+	ifErr(c.Find(bson.M{"_id": bson.ObjectIdHex(uid)}).One(foundUser))
+
+	var results []SimpleUser
+	foundFriend := new(User)
+	for _, friendID := range foundUser.Friends {
+		ifErr(c.Find(bson.M{"_id": friendID}).One(foundFriend))
+		results = append(results, SimpleUser{Name: foundFriend.Nickname, ID: friendID.Hex()})
+	}
+
+	return results
 }

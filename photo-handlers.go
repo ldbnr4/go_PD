@@ -3,11 +3,10 @@ package main
 import (
 	"encoding/json"
 	"io"
-	"math/rand"
 	"net/http"
 	"os"
-	"time"
 
+	"github.com/gorilla/mux"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -56,13 +55,10 @@ func GetPhoto(w http.ResponseWriter, r *http.Request) {
 	defer f.Close()
 }
 
-//DevPhoto ...
-func DevPhoto(w http.ResponseWriter, r *http.Request) {
-	pics := []string{"ironMan.png", "thor.png", "hulk.png", "spiderMan.png"}
-	s := rand.NewSource(time.Now().Unix())
-	random := rand.New(s) // initialize local pseudorandom generator
-	picURL := pics[random.Intn(len(pics))]
-	f, err := os.Open(PrjDir + picURL)
+//DevHero ...
+func DevHero(w http.ResponseWriter, r *http.Request) {
+	picURL := mux.Vars(r)["hero"]
+	f, err := os.Open(PrjDir + "_heros/" + picURL)
 	ifErr(err)
 	io.Copy(w, f)
 	defer f.Close()
