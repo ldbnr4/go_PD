@@ -1,31 +1,67 @@
 package main
 
 import (
-	//	"fmt"
 	"os"
 	"time"
 
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	//	"log"
 )
 
-//User ...
-type User struct {
-	bson.ObjectId                       "_id"
-	Username                            string
-	Email                               string
-	Password                            string
-	Nickname                            string
-	Joined                              string
-	Friends, Albums, FriendReqs, Tagged []bson.ObjectId
-}
+// TODO: Use this type to handle all database interaction
+// =============================================================================================================================================================
+// type Controller struct {
+//     session *Session
+// }
 
-//CreateUserError ...
-type CreateUserError struct {
-	Username bool
-	Email    bool
-}
+// func NewController() (*Controller, error) {
+//     if uri := os.Getenv("MONGOHQ_URL"); uri == "" {
+//         return nil, fmt.Errorf("no DB connection string provided")
+//     }
+//     session, err := mgo.Dial(uri)
+//     if err != nil {
+//         return nil, err
+//     }
+//     return &Controller{
+//         session: session,
+//     }, nil
+// }
+
+// func (c *Controller) getUser(c web.C, w http.ResponseWriter, r *http.Request) {
+//     // Use the session var here
+// }
+
+// func main() {
+//     ctl, err := NewController()
+//     if err != nil {
+//         log.Fatal(err)
+//     }
+//     defer ctl.session.Close()
+
+//     goji.Get("/user", ctl.getUser)
+//     goji.Serve()
+// }
+// =============================================================================================================================================================
+// type DataStore struct {
+//     session *mgo.Session
+// }
+
+// func (ds *DataStore) ucol() *mgo.Collection { ... }
+
+// func (ds *DataStore) UserExist(user string) bool { ... }
+// There are many benefits to that design.
+// An important one is that it allows you to have multiple sessions in flight at the same time,
+// so if you have an http handler, for example, you can create a local session that is backed by an independent session just for that one request:
+
+// func (s *WebSite) dataStore() *DataStore {
+//     return &DataStore{s.session.Copy()}
+// }
+
+// func (s *WebSite) HandleRequest(...) {
+//     ds := s.dataStore()
+//     defer ds.Close()
+//     ...
+// }
 
 func newUser(msg AddUserMsg) User {
 	newU := User{Joined: time.Now().UTC().String()}
@@ -185,4 +221,23 @@ func GetFriendsMgo(uid string) []SimpleUser {
 	}
 
 	return results
+}
+
+// GetProfilesMgo ...
+func GetProfilesMgo(nameLike string) []UserProfile {
+	session, err := mgo.Dial("localhost:27012")
+	ifErr(err)
+	defer session.Close()
+	c := session.DB("test").C("accnts")
+	var real []UserProfile
+
+	ifErr(c.EnsureIndexKey("nickname"))
+	ifErr(
+		c.Find(
+			bson.M{"nickname": &bson.RegEx{Pattern: "^" + nameLike, Options: "i"}}).
+			Select(
+				bson.M{"joined": 1, "nickname": 1}).
+			All(&real))
+
+	return real
 }

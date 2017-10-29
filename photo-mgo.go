@@ -14,7 +14,7 @@ type Photo struct {
 	Album         bson.ObjectId
 }
 
-func newPhoto(owner string, album string, id bson.ObjectId) Photo {
+func newPhoto(owner, album string, id bson.ObjectId) Photo {
 	return Photo{id, time.Now().UTC(), bson.ObjectIdHex(owner), bson.ObjectIdHex(album)}
 }
 
@@ -83,7 +83,7 @@ func DeletePhoto(delPicMsg DelPhotoMsg) {
 	albumC := db.C("albums")
 	albumC.FindId(picObj.Album).One(albumObj)
 
-	if picObj.Owner.Hex() == delPicMsg.UID || onTheGuestList(*albumObj, delPicMsg.UID) {
+	if picObj.Owner.Hex() == delPicMsg.UID || albumObj.Host.Hex() == delPicMsg.UID {
 		FSRemovePhoto(delPicMsg.PID, delPicMsg.UID)
 		mgoRmFrmSetID(albumC, picObj.Album, "photos", picObj.ObjectId)
 		ifErr(photosC.RemoveId(PIDObj))

@@ -10,44 +10,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// AddUserMsg ...
-type AddUserMsg struct {
-	Username string
-	Password string
-	Email    string
-	Nickname string
-}
-
-//AddUserResp ...
-type AddUserResp struct {
-	Error CreateUserError
-	ID    string
-}
-
-//DelUserMsg ...
-type DelUserMsg struct {
-	ID       string
-	Password string
-}
-
-//LoginMsg ...
-type LoginMsg struct {
-	Username string
-	Password string
-}
-
-//GetFriendsResponse ...
-type GetFriendsResponse struct {
-	FriendReqs []SimpleUser
-	Friends    []SimpleUser
-}
-
-//SimpleUser ...
-type SimpleUser struct {
-	Name string
-	ID   string
-}
-
 //UserCreate ...
 func UserCreate(w http.ResponseWriter, r *http.Request) {
 	r.Header.Set("Access-Control-Allow-Origin", "*")
@@ -56,9 +18,7 @@ func UserCreate(w http.ResponseWriter, r *http.Request) {
 	FillStruct(r, msg)
 
 	insertResp := InsertUser(*msg)
-	userDirLocation := PrjDir + insertResp.ID
-	ifErr(os.MkdirAll(userDirLocation, os.ModePerm))
-	ifErr(copyFileContents(PrjDir+"profile.png", userDirLocation+"/"+insertResp.ID))
+	setUpUserDirectory(insertResp.ID)
 
 	// w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -85,7 +45,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 //ProfPic ...
 func ProfPic(w http.ResponseWriter, r *http.Request) {
 	UID := mux.Vars(r)["UID"]
-
+	// TODO: check if UID is a valid UID
 	f, err := os.Open(PrjDir + UID + "/" + UID)
 	ifErr(err)
 	io.Copy(w, f)
@@ -95,21 +55,19 @@ func ProfPic(w http.ResponseWriter, r *http.Request) {
 //GetFriends ...
 func GetFriends(w http.ResponseWriter, r *http.Request) {
 	UID := mux.Vars(r)["UID"]
-	ifErr(json.NewEncoder(w).Encode(GetFriendsResponse{GetFriendReqs(UID), GetFriendsMgo(UID)}))
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	ifErr(json.NewEncoder(w).
+		Encode(
+			GetFriendsResponse{GetFriendReqs(UID), GetFriendsMgo(UID)}))
 }
 
-// elseif(!empty($_GET['USER_SEARCH'])){
-// 	$nickname = $_GET['nickname'];
-// 	$regex = new MongoDB\BSON\Regex ("^$nickname");
-// 	echo json_encode(array("err"=>false,"result"=>$collection->find(array("nickname"=> $regex),array("projection"=>array("nickname"=>1)))->toArray()));
-// 	exit(0);
-// }
-
-// elseif(!empty($_GET['PROF_INFO'])){
-// 	$nickname = $_GET['nickname'];
-// 	echo json_encode(array("err"=>false,"result"=>$collection->findOne(array("nickname"=> $nickname),array("projection"=>array("_id"=>0,"joined"=>1)))));
-// 	exit(0);
-// }
+//SearchUser ...
+func SearchUser(w http.ResponseWriter, r *http.Request) {
+	nameLike := mux.Vars(r)["NAME_LIKE"]
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	fechedProfiles := GetProfilesMgo(nameLike)
+	ifErr(json.NewEncoder(w).Encode(fechedProfiles))
+}
 
 // elseif(!empty($_POST['ACPT_REQ'])){
 // 	$uid = new MongoDB\BSON\ObjectId($_POST['UID']);
