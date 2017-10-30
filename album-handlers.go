@@ -5,8 +5,6 @@ import (
 	//"fmt"
 
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
 /***********
@@ -54,9 +52,10 @@ func AlbumCreate(w http.ResponseWriter, r *http.Request) {
 	FillStruct(r, msg)
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	aid := InsertAlbum(*msg)
+	ctrl := getController()
+	defer ctrl.session.Close()
+	aid := ctrl.InsertAlbum(*msg)
 	w.WriteHeader(http.StatusCreated)
 	ifErr(json.NewEncoder(w).Encode(&AddAlbumResp{ID: aid, Title: msg.Title}))
 }
@@ -65,9 +64,11 @@ func AlbumCreate(w http.ResponseWriter, r *http.Request) {
 func AlbumDelete(w http.ResponseWriter, r *http.Request) {
 	msg := new(AlbumMsgToken)
 	FillStruct(r, msg)
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	RemoveAlbum(*msg)
+
+	ctrl := getController()
+	defer ctrl.session.Close()
+	ctrl.RemoveAlbum(*msg)
 	ifErr(json.NewEncoder(w).Encode("Completed"))
 }
 
@@ -76,16 +77,9 @@ func GetAlbum(w http.ResponseWriter, r *http.Request) {
 	msg := AlbumMsgToken{UID: r.URL.Query().Get("UserId"), AID: r.URL.Query().Get("AlbumId")}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	pids := GetAlbumPhotos(msg)
-	ifErr(json.NewEncoder(w).Encode(&GetAlbumPIDsResp{PhotoIDs: pids}))
-}
 
-//GetAlbums ...
-func GetAlbums(w http.ResponseWriter, r *http.Request) {
-	UID := mux.Vars(r)["UID"]
-	aids := GetUserAlbums(UID)
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	r.Header.Set("Access-Control-Allow-Origin", "*")
-	ifErr(json.NewEncoder(w).Encode(aids))
+	ctrl := getController()
+	defer ctrl.session.Close()
+	pids := ctrl.GetAlbumPhotos(msg)
+	ifErr(json.NewEncoder(w).Encode(&GetAlbumPIDsResp{PhotoIDs: pids}))
 }

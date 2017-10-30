@@ -1,11 +1,12 @@
 package main
 
-var PhotoRoutes = []Route{Route{
-	"PhotoCreate",
-	"POST",
-	"/photo",
-	PhotoCreate,
-},
+var PhotoRoutes = []Route{
+	Route{
+		"PhotoCreate",
+		"POST",
+		"/photo",
+		PhotoCreate,
+	},
 	Route{
 		"PhotoDelete",
 		"POST",

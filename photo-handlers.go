@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gorilla/mux"
+	"goji.io/pat"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -27,16 +27,14 @@ type DelPhotoMsg struct {
  * HANDLERS *
  ************/
 func PhotoCreate(w http.ResponseWriter, r *http.Request) {
-
-	r.Header.Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	pid := bson.NewObjectId()
 
 	msg := SaveImageFile(pid.Hex(), r)
 
-	InsertPhoto(*msg, pid)
+	ctrl := getController()
+	defer ctrl.session.Close()
+	ctrl.InsertPhoto(*msg, pid)
 
 	defer r.Body.Close()
 	w.WriteHeader(http.StatusCreated)
@@ -57,7 +55,7 @@ func GetPhoto(w http.ResponseWriter, r *http.Request) {
 
 //DevHero ...
 func DevHero(w http.ResponseWriter, r *http.Request) {
-	picURL := mux.Vars(r)["hero"]
+	picURL := pat.Param(r, "hero")
 	f, err := os.Open(PrjDir + "_heros/" + picURL)
 	ifErr(err)
 	io.Copy(w, f)
@@ -67,6 +65,8 @@ func DevHero(w http.ResponseWriter, r *http.Request) {
 func PhotoDelete(w http.ResponseWriter, r *http.Request) {
 	msg := new(DelPhotoMsg)
 	FillStruct(r, msg)
-	DeletePhoto(*msg)
+	ctrl := getController()
+	defer ctrl.session.Close()
+	ctrl.DeletePhoto(*msg)
 	ifErr(json.NewEncoder(w).Encode("Completed"))
 }

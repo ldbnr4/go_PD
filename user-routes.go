@@ -5,19 +5,19 @@ var UserRoutes = Routes{
 	Route{
 		"ProfPic",
 		"GET",
-		"/user/{UID}",
+		"/user/:UID",
 		ProfPic,
 	},
 	Route{
 		"GetFriends",
 		"GET",
-		"/friends/{UID}",
+		"/friends/:UID",
 		GetFriends,
 	},
 	Route{
 		"SearchUser",
 		"GET",
-		"/user/s/{NAME_LIKE}",
+		"/user/s/:NAME_LIKE",
 		SearchUser,
 	},
 	Route{

@@ -3,7 +3,6 @@ package main
 import (
 	"time"
 
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -18,7 +17,7 @@ func newPhoto(owner, album string, id bson.ObjectId) Photo {
 	return Photo{id, time.Now().UTC(), bson.ObjectIdHex(owner), bson.ObjectIdHex(album)}
 }
 
-func InsertPhoto(msg AddPhotoMsg, id bson.ObjectId) {
+func (c *MgoController) InsertPhoto(msg AddPhotoMsg, id bson.ObjectId) {
 	switch {
 	case msg.Owner == "":
 		panic("empty owner")
@@ -28,40 +27,25 @@ func InsertPhoto(msg AddPhotoMsg, id bson.ObjectId) {
 		break
 	}
 
-	session, err := mgo.Dial("localhost:27012")
-	ifErr(err)
-	defer session.Close()
-
-	// session.SetMode(mgo.Monotonic, true)
-
 	photObj := newPhoto(msg.Owner, msg.Album, id)
 
-	db := session.DB("test")
+	ifErr(c.photoCol.Insert(photObj))
 
-	photosC := db.C("photos")
-	ifErr(photosC.Insert(photObj))
-
-	mgoAddToSetID(db.C("albums"), bson.ObjectIdHex(msg.Album), "photos", id)
+	mgoAddToSetID(c.albumCol, bson.ObjectIdHex(msg.Album), "photos", id)
 }
 
-func DeletePhotosFrmAlbum(albumObj Album) {
+func (c *MgoController) DeletePhotosFrmAlbum(albumObj Album) {
 	switch {
 	case albumObj.Host.Hex() == "":
 		panic("DeletePhotosFrmAlbum: empty user id")
 	}
-	session, err := mgo.Dial("localhost:27012")
-	ifErr(err)
-	defer session.Close()
-	db := session.DB("test")
-	photosC := db.C("photos")
-
 	for _, photoID := range albumObj.Photos {
 		FSRemovePhoto(photoID.Hex(), albumObj.Host.Hex())
-		ifErr(photosC.RemoveId(photoID))
+		ifErr(c.photoCol.RemoveId(photoID))
 	}
 }
 
-func DeletePhoto(delPicMsg DelPhotoMsg) {
+func (c *MgoController) DeletePhoto(delPicMsg DelPhotoMsg) {
 	switch {
 	case delPicMsg.PID == "":
 		panic("DeletePhoto: empty pic id")
@@ -69,24 +53,17 @@ func DeletePhoto(delPicMsg DelPhotoMsg) {
 		panic("DeletePhoto: empty user id")
 	}
 
-	session, err := mgo.Dial("localhost:27012")
-	ifErr(err)
-	defer session.Close()
-	db := session.DB("test")
-	photosC := db.C("photos")
-
 	PIDObj := bson.ObjectIdHex(delPicMsg.PID)
 	picObj := new(Photo)
-	photosC.FindId(PIDObj).One(picObj)
+	c.photoCol.FindId(PIDObj).One(picObj)
 
 	albumObj := new(Album)
-	albumC := db.C("albums")
-	albumC.FindId(picObj.Album).One(albumObj)
+	c.albumCol.FindId(picObj.Album).One(albumObj)
 
 	if picObj.Owner.Hex() == delPicMsg.UID || albumObj.Host.Hex() == delPicMsg.UID {
 		FSRemovePhoto(delPicMsg.PID, delPicMsg.UID)
-		mgoRmFrmSetID(albumC, picObj.Album, "photos", picObj.ObjectId)
-		ifErr(photosC.RemoveId(PIDObj))
+		mgoRmFrmSetID(c.albumCol, picObj.Album, "photos", picObj.ObjectId)
+		ifErr(c.photoCol.RemoveId(PIDObj))
 	}
 
 }

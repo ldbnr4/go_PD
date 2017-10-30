@@ -4,7 +4,6 @@ import (
 	//	"fmt"
 	"time"
 
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	//	"log"
 )
@@ -25,31 +24,21 @@ func newAlbum(msg AddAlbumMsg) Album {
 }
 
 //InsertAlbum inserts a new album into the DB
-func InsertAlbum(msg AddAlbumMsg) string {
+func (c *MgoController) InsertAlbum(msg AddAlbumMsg) string {
 	if msg.Title == "" {
 		panic("empty title")
 	}
 	newAlbum := newAlbum(msg)
 
-	session, err := mgo.Dial("localhost:27012")
-	ifErr(err)
-	defer session.Close()
+	ifErr(c.albumCol.Insert(newAlbum))
 
-	// Optional. Switch the session to a monotonic behavior.
-	// session.SetMode(mgo.Monotonic, true)
-
-	db := session.DB("test")
-
-	albumsC := db.C("albums")
-	ifErr(albumsC.Insert(newAlbum))
-
-	mgoAddToSetID(db.C("accnts"), bson.ObjectIdHex(msg.UserId), "albums", newAlbum.ObjectId)
+	mgoAddToSetID(c.userCol, bson.ObjectIdHex(msg.UserId), "albums", newAlbum.ObjectId)
 
 	return newAlbum.ObjectId.Hex()
 }
 
 //RemoveAlbum removes an album from the DB
-func RemoveAlbum(msg AlbumMsgToken) {
+func (c *MgoController) RemoveAlbum(msg AlbumMsgToken) {
 	switch {
 	case msg.UID == "":
 		panic("empty user id")
@@ -57,29 +46,20 @@ func RemoveAlbum(msg AlbumMsgToken) {
 		panic("empty album id")
 	}
 
-	session, err := mgo.Dial("localhost:27012")
-	defer session.Close()
-	ifErr(err)
-
-	// session.SetMode(mgo.Monotonic, true)
-
-	db := session.DB("test")
-
-	albumC := db.C("albums")
 	albumObjID := bson.ObjectIdHex(msg.AID)
 
 	var albumObj Album
 
-	ifErr(albumC.FindId(albumObjID).One(&albumObj))
+	ifErr(c.albumCol.FindId(albumObjID).One(&albumObj))
 
-	mgoRmFrmSetID(db.C("accnts"), bson.ObjectIdHex(msg.UID), "albums", albumObjID)
+	mgoRmFrmSetID(c.userCol, bson.ObjectIdHex(msg.UID), "albums", albumObjID)
 
-	DeletePhotosFrmAlbum(albumObj)
+	c.DeletePhotosFrmAlbum(albumObj)
 
-	ifErr(albumC.RemoveId(bson.ObjectIdHex(msg.AID)))
+	ifErr(c.albumCol.RemoveId(bson.ObjectIdHex(msg.AID)))
 }
 
-func GetAlbumPhotos(msg AlbumMsgToken) []string {
+func (c *MgoController) GetAlbumPhotos(msg AlbumMsgToken) []string {
 	switch {
 	case msg.AID == "":
 		panic("Empty AlbumId in GetAlbumPhotos")
@@ -87,18 +67,11 @@ func GetAlbumPhotos(msg AlbumMsgToken) []string {
 		panic("Empty UserId in GetAlbumPhotos")
 	}
 
-	session, err := mgo.Dial("localhost:27012")
-	ifErr(err)
-	defer session.Close()
-
-	db := session.DB("test")
-
-	albumC := db.C("albums")
 	albumObjID := bson.ObjectIdHex(msg.AID)
 
 	var albumObj Album
 
-	ifErr(albumC.FindId(albumObjID).One(&albumObj))
+	ifErr(c.albumCol.FindId(albumObjID).One(&albumObj))
 
 	if !onTheGuestList(albumObj, msg.AID) && albumObj.Host.Hex() != msg.UID {
 		panic("No access rights")

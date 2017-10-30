@@ -11,7 +11,7 @@ var AlbumRoutes = Routes{
 	Route{
 		"GetAlbums",
 		"GET",
-		"/albums/{UID}",
+		"/albums/:UID",
 		GetAlbums,
 	},
 	Route{

@@ -3,25 +3,23 @@ package main
 import (
 	"encoding/json"
 	"io"
-	//"fmt"
 	"net/http"
 	"os"
 
-	"github.com/gorilla/mux"
+	"goji.io/pat"
 )
 
 //UserCreate ...
 func UserCreate(w http.ResponseWriter, r *http.Request) {
-	r.Header.Set("Access-Control-Allow-Origin", "*")
-
 	msg := new(AddUserMsg)
 	FillStruct(r, msg)
 
-	insertResp := InsertUser(*msg)
+	ctrl := getController()
+	defer ctrl.session.Close()
+
+	insertResp := ctrl.InsertUser(*msg)
 	setUpUserDirectory(insertResp.ID)
 
-	// w.WriteHeader(http.StatusCreated)
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	ifErr(json.NewEncoder(w).Encode(insertResp))
 }
@@ -30,7 +28,9 @@ func UserCreate(w http.ResponseWriter, r *http.Request) {
 func UserDelete(w http.ResponseWriter, r *http.Request) {
 	msg := new(DelUserMsg)
 	FillStruct(r, msg)
-	RemoveUser(*msg)
+	ctrl := getController()
+	defer ctrl.session.Close()
+	ctrl.RemoveUser(*msg)
 	ifErr(json.NewEncoder(w).Encode("Completed"))
 }
 
@@ -38,13 +38,15 @@ func UserDelete(w http.ResponseWriter, r *http.Request) {
 func Login(w http.ResponseWriter, r *http.Request) {
 	msg := new(LoginMsg)
 	FillStruct(r, msg)
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	ifErr(json.NewEncoder(w).Encode(RetrieveUser(*msg)))
+	ctrl := getController()
+	defer ctrl.session.Close()
+	ifErr(json.NewEncoder(w).Encode(ctrl.GetUser(*msg)))
 }
 
 //ProfPic ...
 func ProfPic(w http.ResponseWriter, r *http.Request) {
-	UID := mux.Vars(r)["UID"]
+	UID := pat.Param(r, "UID")
+
 	// TODO: check if UID is a valid UID
 	f, err := os.Open(PrjDir + UID + "/" + UID)
 	ifErr(err)
@@ -54,18 +56,29 @@ func ProfPic(w http.ResponseWriter, r *http.Request) {
 
 //GetFriends ...
 func GetFriends(w http.ResponseWriter, r *http.Request) {
-	UID := mux.Vars(r)["UID"]
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	UID := pat.Param(r, "UID")
+	ctrl := getController()
+	defer ctrl.session.Close()
 	ifErr(json.NewEncoder(w).
 		Encode(
-			GetFriendsResponse{GetFriendReqs(UID), GetFriendsMgo(UID)}))
+			GetFriendsResponse{ctrl.GetFriendReqs(UID), ctrl.GetFriendsMgo(UID)}))
+}
+
+//GetAlbums ...
+func GetAlbums(w http.ResponseWriter, r *http.Request) {
+	UID := pat.Param(r, "UID")
+	ctrl := getController()
+	defer ctrl.session.Close()
+	aids := ctrl.GetUserAlbums(UID)
+	ifErr(json.NewEncoder(w).Encode(aids))
 }
 
 //SearchUser ...
 func SearchUser(w http.ResponseWriter, r *http.Request) {
-	nameLike := mux.Vars(r)["NAME_LIKE"]
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	fechedProfiles := GetProfilesMgo(nameLike)
+	nameLike := pat.Param(r, "NAME_LIKE")
+	ctrl := getController()
+	defer ctrl.session.Close()
+	fechedProfiles := ctrl.GetProfilesMgo(nameLike)
 	ifErr(json.NewEncoder(w).Encode(fechedProfiles))
 }
 
