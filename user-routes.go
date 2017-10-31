@@ -32,11 +32,22 @@ var UserRoutes = Routes{
 		"/del/user",
 		UserDelete,
 	},
-
 	Route{
 		"Login",
 		"POST",
 		"/login",
 		Login,
+	},
+	Route{
+		"AcceptFriendReq",
+		"POST",
+		"/acpt",
+		AcceptReq,
+	},
+	Route{
+		"DeclineFriendReq",
+		"POST",
+		"/acpt",
+		DeclineReq,
 	},
 }

@@ -82,56 +82,31 @@ func SearchUser(w http.ResponseWriter, r *http.Request) {
 	ifErr(json.NewEncoder(w).Encode(fechedProfiles))
 }
 
-// elseif(!empty($_POST['ACPT_REQ'])){
-// 	$uid = new MongoDB\BSON\ObjectId($_POST['UID']);
-// 	$friendId = new MongoDB\BSON\ObjectId($_POST['FRND_ID']);
-// 	$collection->updateOne(
-// 		array( "_id" => $friendId),
-// 		array( '$pull'=> array("friendReqs"=>$uid))
-// 	);
-// 	$result = $collection->updateOne(
-// 		array( "_id" => $uid),
-// 		array( '$pull'=> array("friendReqs"=>$friendId))
-// 	);
-// 	if($result->getModifiedCount() != 1){
-// 		echo json_encode(array("err"=>true, "msg" => "Failed to remove from reqs list."));
-// 		exit(0);
-// 	}
-// 	else{
-// 		$result = $collection->updateOne(
-// 			array( "_id" => $friendId),
-// 			array( '$addToSet'=> array("friends"=>$uid))
-// 		);
-// 		if($result->getModifiedCount() != 1){
-// 			echo json_encode(array("err"=>true, "msg" => "Failed to add id to friends list."));
-// 			exit(0);
-// 		}
-// 		$result = $collection->updateOne(
-// 			array( "_id" => $uid),
-// 			array( '$addToSet'=> array("friends"=>$friendId))
-// 		);
-// 		if($result->getModifiedCount() != 1){
-// 			echo json_encode(array("err"=>true, "msg" => "Failed to add id to friends list."));
-// 			exit(0);
-// 		}
-// 		echo json_encode(array("err"=>false));
-// 		exit(0);
-// 	}
-// }
+func AcceptReq(w http.ResponseWriter, r *http.Request) {
+	ctrl := getController()
+	defer ctrl.session.Close()
+	var msg FriendReqRequest
+	FillStruct(r, msg)
+	ctrl.AcceptReqMgo(msg)
+	ifErr(json.NewEncoder(w).Encode("Completed"))
+}
 
-// elseif(!empty($_POST['DEC_REQ'])){
-// 	$uid = new MongoDB\BSON\ObjectId($_POST['UID']);
-// 	$friendId = new MongoDB\BSON\ObjectId($_POST['FRND_ID']);
-// 	$result = $collection->updateOne(
-// 		array( "_id" => $uid),
-// 		array( '$pull'=> array("friendReqs"=>$friendId))
-// 	);
-// 	if($result->getModifiedCount() != 1){
-// 		echo json_encode(array("err"=>true, "msg" => "Failed to delete album."));
-// 		exit(0);
-// 	}
-// 	else{
-// 		echo json_encode(array("err"=>false));
-// 		exit(0);
-// 	}
-// }
+// DeclineReq ...
+func DeclineReq(w http.ResponseWriter, r *http.Request) {
+	ctrl := getController()
+	defer ctrl.session.Close()
+	var msg FriendReqRequest
+	FillStruct(r, msg)
+	ctrl.DeclineReqMgo(msg)
+	ifErr(json.NewEncoder(w).Encode("Completed"))
+}
+
+// SendReq ...
+func SendReq(w http.ResponseWriter, r *http.Request) {
+	ctrl := getController()
+	defer ctrl.session.Close()
+	var msg FriendReqRequest
+	FillStruct(r, msg)
+	ctrl.SendReqMgo(msg)
+	ifErr(json.NewEncoder(w).Encode("Completed"))
+}

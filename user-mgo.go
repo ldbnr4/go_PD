@@ -143,3 +143,26 @@ func (c *MgoController) GetProfilesMgo(nameLike string) []UserProfile {
 
 	return real
 }
+
+// AcceptReqMgo ...
+func (c *MgoController) AcceptReqMgo(msg FriendReqRequest) {
+	mgoRmFrmSetID(c.userCol, bson.ObjectIdHex(msg.UID), "friendReqs", bson.ObjectIdHex(msg.FriendUID))
+	mgoAddToSetID(c.userCol, bson.ObjectIdHex(msg.UID), "friends", bson.ObjectIdHex(msg.FriendUID))
+	mgoAddToSetID(c.userCol, bson.ObjectIdHex(msg.FriendUID), "friends", bson.ObjectIdHex(msg.UID))
+}
+
+// DeclineReqRequest ...
+func (c *MgoController) DeclineReqMgo(msg FriendReqRequest) {
+	mgoRmFrmSetID(c.userCol, bson.ObjectIdHex(msg.UID), "friendReqs", bson.ObjectIdHex(msg.FriendUID))
+}
+
+// SendReq ...
+func (c *MgoController) SendReqMgo(msg FriendReqRequest) {
+	mgoAddToSetID(c.userCol, bson.ObjectIdHex(msg.FriendUID), "friendReqs", bson.ObjectIdHex(msg.UID))
+}
+
+// RemoveFriend ...
+func (c *MgoController) RemoveFriendMgo(msg FriendReqRequest) {
+	mgoRmFrmSetID(c.userCol, bson.ObjectIdHex(msg.UID), "friends", bson.ObjectIdHex(msg.FriendUID))
+	mgoRmFrmSetID(c.userCol, bson.ObjectIdHex(msg.FriendUID), "friends", bson.ObjectIdHex(msg.UID))
+}

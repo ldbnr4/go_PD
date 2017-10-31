@@ -64,3 +64,9 @@ type UserProfile struct {
 	Nickname string
 	Joined   string
 }
+
+// FriendReqRequest ...
+type FriendReqRequest struct {
+	UID       string
+	FriendUID string
+}
