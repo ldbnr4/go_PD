@@ -10,33 +10,18 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-/***********
- * STRUCTS *
- ***********/
-type AddPhotoMsg struct {
-	Album string
-	Owner string
-}
-
-type DelPhotoMsg struct {
-	UID string
-	PID string
-}
-
-/************
- * HANDLERS *
- ************/
 func PhotoCreate(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	ctrl := getController(r)
+	defer ctrl.session.Close()
+
 	pid := bson.NewObjectId()
 
-	msg := SaveImageFile(pid.Hex(), r)
+	msg := SaveImageFile(pid.Hex(), ctrl.UID.Hex(), r)
 
-	ctrl := getController()
-	defer ctrl.session.Close()
 	ctrl.InsertPhoto(*msg, pid)
 
 	defer r.Body.Close()
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
 	ifErr(json.NewEncoder(w).Encode(pid.Hex()))
 }
@@ -65,7 +50,7 @@ func DevHero(w http.ResponseWriter, r *http.Request) {
 func PhotoDelete(w http.ResponseWriter, r *http.Request) {
 	msg := new(DelPhotoMsg)
 	FillStruct(r, msg)
-	ctrl := getController()
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ctrl.DeletePhoto(*msg)
 	ifErr(json.NewEncoder(w).Encode("Completed"))

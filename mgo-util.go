@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -9,6 +11,7 @@ import (
 type MgoController struct {
 	session                     *mgo.Session
 	userCol, albumCol, photoCol *mgo.Collection
+	UID                         bson.ObjectId
 }
 
 // func (c *Controller) getUser(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -23,16 +26,26 @@ type MgoController struct {
 //     goji.Get("/user", ctl.getUser)
 //     goji.Serve()
 // }
-func getController() *MgoController {
+func getController(r *http.Request) *MgoController {
 	session, err := mgo.Dial("localhost:27012")
 	ifErr(err)
 	db := session.DB("test")
-	return &MgoController{
+	retCtrl := &MgoController{
 		session:  session,
 		userCol:  db.C("accnts"),
 		albumCol: db.C("albums"),
 		photoCol: db.C("photos"),
 	}
+	uidStr := r.Header.Get("UID")
+	if uidStr != "" {
+		retCtrl.UID = bson.ObjectIdHex(uidStr)
+		count, err := retCtrl.userCol.FindId(retCtrl.UID).Count()
+		ifErr(err)
+		if count != 1 {
+			panic("Invalid UID")
+		}
+	}
+	return retCtrl
 }
 
 // TODO: make first parameter type{mgo.Collection, bson.ObjectId}

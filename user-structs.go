@@ -37,7 +37,6 @@ type AddUserResp struct {
 
 // DelUserMsg ...
 type DelUserMsg struct {
-	ID       string
 	Password string
 }
 
@@ -49,14 +48,8 @@ type LoginMsg struct {
 
 // GetFriendsResponse ...
 type GetFriendsResponse struct {
-	FriendReqs []SimpleUser
-	Friends    []SimpleUser
-}
-
-// SimpleUser ...
-type SimpleUser struct {
-	Name string
-	ID   string
+	FriendReqs []string
+	Friends    []string
 }
 
 // UserProfile ...
@@ -67,6 +60,5 @@ type UserProfile struct {
 
 // FriendReqRequest ...
 type FriendReqRequest struct {
-	UID       string
 	FriendUID string
 }

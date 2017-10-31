@@ -13,8 +13,8 @@ type MainStruct struct {
 
 // type MainHandler
 
-// TODO:	~ Create prod, dev mongo dbs
-// 			~ https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication
+// TODO:	~ Create prod, dev mongo dbs (add type to header in request maybe?)
+// 			~ stress test requests with js
 //			~ Use PUT and DELETE methods
 func main() {
 

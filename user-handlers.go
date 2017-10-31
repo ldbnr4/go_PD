@@ -14,7 +14,7 @@ func UserCreate(w http.ResponseWriter, r *http.Request) {
 	msg := new(AddUserMsg)
 	FillStruct(r, msg)
 
-	ctrl := getController()
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 
 	insertResp := ctrl.InsertUser(*msg)
@@ -28,7 +28,7 @@ func UserCreate(w http.ResponseWriter, r *http.Request) {
 func UserDelete(w http.ResponseWriter, r *http.Request) {
 	msg := new(DelUserMsg)
 	FillStruct(r, msg)
-	ctrl := getController()
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ctrl.RemoveUser(*msg)
 	ifErr(json.NewEncoder(w).Encode("Completed"))
@@ -38,7 +38,7 @@ func UserDelete(w http.ResponseWriter, r *http.Request) {
 func Login(w http.ResponseWriter, r *http.Request) {
 	msg := new(LoginMsg)
 	FillStruct(r, msg)
-	ctrl := getController()
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ifErr(json.NewEncoder(w).Encode(ctrl.GetUser(*msg)))
 }
@@ -57,7 +57,7 @@ func ProfPic(w http.ResponseWriter, r *http.Request) {
 //GetFriends ...
 func GetFriends(w http.ResponseWriter, r *http.Request) {
 	UID := pat.Param(r, "UID")
-	ctrl := getController()
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ifErr(json.NewEncoder(w).
 		Encode(
@@ -67,7 +67,7 @@ func GetFriends(w http.ResponseWriter, r *http.Request) {
 //GetAlbums ...
 func GetAlbums(w http.ResponseWriter, r *http.Request) {
 	UID := pat.Param(r, "UID")
-	ctrl := getController()
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	aids := ctrl.GetUserAlbums(UID)
 	ifErr(json.NewEncoder(w).Encode(aids))
@@ -76,14 +76,14 @@ func GetAlbums(w http.ResponseWriter, r *http.Request) {
 //SearchUser ...
 func SearchUser(w http.ResponseWriter, r *http.Request) {
 	nameLike := pat.Param(r, "NAME_LIKE")
-	ctrl := getController()
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	fechedProfiles := ctrl.GetProfilesMgo(nameLike)
 	ifErr(json.NewEncoder(w).Encode(fechedProfiles))
 }
 
 func AcceptReq(w http.ResponseWriter, r *http.Request) {
-	ctrl := getController()
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	var msg FriendReqRequest
 	FillStruct(r, msg)
@@ -93,7 +93,7 @@ func AcceptReq(w http.ResponseWriter, r *http.Request) {
 
 // DeclineReq ...
 func DeclineReq(w http.ResponseWriter, r *http.Request) {
-	ctrl := getController()
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	var msg FriendReqRequest
 	FillStruct(r, msg)
@@ -103,7 +103,7 @@ func DeclineReq(w http.ResponseWriter, r *http.Request) {
 
 // SendReq ...
 func SendReq(w http.ResponseWriter, r *http.Request) {
-	ctrl := getController()
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	var msg FriendReqRequest
 	FillStruct(r, msg)

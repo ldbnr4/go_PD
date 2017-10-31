@@ -7,12 +7,12 @@ import (
 	"os"
 )
 
-func SaveImageFile(pid string, r *http.Request) *AddPhotoMsg {
+func SaveImageFile(pid, owner string, r *http.Request) *AddPhotoMsg {
 	r.ParseMultipartForm(32 << 20)
 	msg := new(AddPhotoMsg)
 	FillStruct(r, msg)
 
-	path := PrjDir + msg.Owner + "/" + pid
+	path := PrjDir + owner + "/" + pid
 	// panic(r.PostForm)
 	file, _, err := r.FormFile("file")
 	if err != nil {

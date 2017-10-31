@@ -1,48 +1,31 @@
 package main
 
 import (
-	//	"fmt"
 	"time"
 
 	"gopkg.in/mgo.v2/bson"
 	//	"log"
 )
 
-//Album that is stored in the DB
-type Album struct {
-	bson.ObjectId "_id"
-	Title         string
-	Host          bson.ObjectId
-	Creation      time.Time
-	Photos, Guest []bson.ObjectId
-}
-
-func newAlbum(msg AddAlbumMsg) Album {
-	newU := Album{Title: msg.Title, Host: bson.ObjectIdHex(msg.UserId), Creation: time.Now().UTC()}
-	newU.ObjectId = bson.NewObjectId()
-	return newU
-}
-
 //InsertAlbum inserts a new album into the DB
 func (c *MgoController) InsertAlbum(msg AddAlbumMsg) string {
 	if msg.Title == "" {
 		panic("empty title")
 	}
-	newAlbum := newAlbum(msg)
+
+	newAlbum := Album{Title: msg.Title, Host: c.UID, Creation: time.Now().UTC()}
+	newAlbum.ObjectId = bson.NewObjectId()
 
 	ifErr(c.albumCol.Insert(newAlbum))
 
-	mgoAddToSetID(c.userCol, bson.ObjectIdHex(msg.UserId), "albums", newAlbum.ObjectId)
+	mgoAddToSetID(c.userCol, c.UID, "albums", newAlbum.ObjectId)
 
 	return newAlbum.ObjectId.Hex()
 }
 
 //RemoveAlbum removes an album from the DB
 func (c *MgoController) RemoveAlbum(msg AlbumMsgToken) {
-	switch {
-	case msg.UID == "":
-		panic("empty user id")
-	case msg.AID == "":
+	if msg.AID == "" {
 		panic("empty album id")
 	}
 
@@ -52,7 +35,7 @@ func (c *MgoController) RemoveAlbum(msg AlbumMsgToken) {
 
 	ifErr(c.albumCol.FindId(albumObjID).One(&albumObj))
 
-	mgoRmFrmSetID(c.userCol, bson.ObjectIdHex(msg.UID), "albums", albumObjID)
+	mgoRmFrmSetID(c.userCol, c.UID, "albums", albumObjID)
 
 	c.DeletePhotosFrmAlbum(albumObj)
 
@@ -60,20 +43,13 @@ func (c *MgoController) RemoveAlbum(msg AlbumMsgToken) {
 }
 
 func (c *MgoController) GetAlbumPhotos(msg AlbumMsgToken) []string {
-	switch {
-	case msg.AID == "":
+	if msg.AID == "" {
 		panic("Empty AlbumId in GetAlbumPhotos")
-	case msg.UID == "":
-		panic("Empty UserId in GetAlbumPhotos")
 	}
 
-	albumObjID := bson.ObjectIdHex(msg.AID)
-
 	var albumObj Album
-
-	ifErr(c.albumCol.FindId(albumObjID).One(&albumObj))
-
-	if !onTheGuestList(albumObj, msg.AID) && albumObj.Host.Hex() != msg.UID {
+	ifErr(c.albumCol.FindId(bson.ObjectIdHex(msg.AID)).One(&albumObj))
+	if !onTheGuestList(albumObj, c.UID) && albumObj.Host != c.UID {
 		panic("No access rights")
 	}
 

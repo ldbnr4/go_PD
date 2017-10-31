@@ -1,9 +1,11 @@
 package main
 
-func onTheGuestList(album Album, visitor string) bool {
+import "gopkg.in/mgo.v2/bson"
+
+func onTheGuestList(album Album, visitor bson.ObjectId) bool {
 	allowed := false
 	for _, guest := range album.Guest {
-		if guest.Hex() == visitor {
+		if guest == visitor {
 			allowed = true
 			break
 		}

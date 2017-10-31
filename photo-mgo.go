@@ -6,28 +6,12 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-type Photo struct {
-	bson.ObjectId "_id"
-	Upload        time.Time
-	Owner         bson.ObjectId
-	Album         bson.ObjectId
-}
-
-func newPhoto(owner, album string, id bson.ObjectId) Photo {
-	return Photo{id, time.Now().UTC(), bson.ObjectIdHex(owner), bson.ObjectIdHex(album)}
-}
-
 func (c *MgoController) InsertPhoto(msg AddPhotoMsg, id bson.ObjectId) {
-	switch {
-	case msg.Owner == "":
-		panic("empty owner")
-	case msg.Album == "":
+	if msg.Album == "" {
 		panic("empty album")
-	default:
-		break
 	}
 
-	photObj := newPhoto(msg.Owner, msg.Album, id)
+	photObj := Photo{ObjectId: id, Upload: time.Now().UTC(), Owner: c.UID, Album: bson.ObjectIdHex(msg.Album)}
 
 	ifErr(c.photoCol.Insert(photObj))
 
@@ -46,11 +30,8 @@ func (c *MgoController) DeletePhotosFrmAlbum(albumObj Album) {
 }
 
 func (c *MgoController) DeletePhoto(delPicMsg DelPhotoMsg) {
-	switch {
-	case delPicMsg.PID == "":
+	if delPicMsg.PID == "" {
 		panic("DeletePhoto: empty pic id")
-	case delPicMsg.UID == "":
-		panic("DeletePhoto: empty user id")
 	}
 
 	PIDObj := bson.ObjectIdHex(delPicMsg.PID)
@@ -60,8 +41,8 @@ func (c *MgoController) DeletePhoto(delPicMsg DelPhotoMsg) {
 	albumObj := new(Album)
 	c.albumCol.FindId(picObj.Album).One(albumObj)
 
-	if picObj.Owner.Hex() == delPicMsg.UID || albumObj.Host.Hex() == delPicMsg.UID {
-		FSRemovePhoto(delPicMsg.PID, delPicMsg.UID)
+	if picObj.Owner == c.UID || albumObj.Host == c.UID {
+		FSRemovePhoto(delPicMsg.PID, c.UID.Hex())
 		mgoRmFrmSetID(c.albumCol, picObj.Album, "photos", picObj.ObjectId)
 		ifErr(c.photoCol.RemoveId(PIDObj))
 	}
