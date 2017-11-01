@@ -17,7 +17,7 @@ func newUser(msg AddUserMsg) User {
 	return newU
 }
 
-func (c *MgoController) checkIfUserExist(username, email string) CreateUserError {
+func (c *PDMgoController) checkIfUserExist(username, email string) CreateUserError {
 	usernameFind := new(User)
 	emailFind := new(User)
 
@@ -28,7 +28,7 @@ func (c *MgoController) checkIfUserExist(username, email string) CreateUserError
 }
 
 //InsertUser ...
-func (c *MgoController) InsertUser(msg AddUserMsg) AddUserResp {
+func (c *PDMgoController) InsertUser(msg AddUserMsg) AddUserResp {
 	newUser := newUser(msg)
 
 	userDBCheck := c.checkIfUserExist(msg.Username, msg.Email)
@@ -42,7 +42,7 @@ func (c *MgoController) InsertUser(msg AddUserMsg) AddUserResp {
 // RemoveUser ...
 // TODO:	~Remove user from all guest lists
 // 			~Remove user photos
-func (pdMgo *PDMgoController) RemoveUser(msg DelUserMsg) {
+func (pdMgo *PDUIDMgoController) RemoveUser(password string) {
 	var user User
 	ifErr(pdMgo.userCol.FindId(pdMgo.UID).One(&user))
 
@@ -51,7 +51,7 @@ func (pdMgo *PDMgoController) RemoveUser(msg DelUserMsg) {
 	}
 
 	for _, friend := range user.Friends {
-		mgoRmFrmSetID(pdMgo.userCol, friend, "friends", user.ObjectId)
+		mgoRmFrmSet(pdMgo.userCol, friend, "friends", user.ObjectId)
 	}
 
 	for _, album := range user.Albums {
@@ -63,7 +63,7 @@ func (pdMgo *PDMgoController) RemoveUser(msg DelUserMsg) {
 }
 
 //GetUser ...
-func (c *MgoController) GetUser(msg LoginMsg) *interface{} {
+func (c *PDMgoController) GetUser(msg LoginMsg) *interface{} {
 	foundUser := new(interface{})
 
 	c.userCol.Find(bson.M{"username": msg.Username, "password": msg.Password}).One(foundUser)
@@ -74,33 +74,10 @@ func (c *MgoController) GetUser(msg LoginMsg) *interface{} {
 	return foundUser
 }
 
-//GetUserAlbums ...
-func (c *MgoController) GetUserAlbums(uid string) GetAlbumsResp {
-	foundUser := new(User)
-	ifErr(c.userCol.Find(bson.M{"_id": bson.ObjectIdHex(uid)}).One(foundUser))
-
-	list := foundUser.Albums
-	taggedList := foundUser.Tagged
-	created := make([]GetAlbumResp, len(list))
-	album := new(Album)
-	for i, albumID := range list {
-		ifErr(c.albumCol.Find(bson.M{"_id": albumID}).One(album))
-		created[i] = GetAlbumResp{Title: album.Title, ID: albumID.Hex()}
-	}
-
-	tagged := make([]GetAlbumResp, len(taggedList))
-	for i, albumID := range taggedList {
-		ifErr(c.albumCol.Find(bson.M{"_id": albumID}).One(album))
-		tagged[i] = GetAlbumResp{Title: album.Title, ID: albumID.Hex()}
-	}
-
-	return GetAlbumsResp{Created: created, Tagged: tagged}
-}
-
 //GetFriendReqs ...
-func (c *MgoController) GetFriendReqs(uid string) []string {
+func (c *PDUIDMgoController) GetFriendReqs(uid bson.ObjectId) []string {
 	foundUser := new(User)
-	ifErr(c.userCol.Find(bson.M{"_id": bson.ObjectIdHex(uid)}).One(foundUser))
+	ifErr(c.userCol.Find(bson.M{"_id": uid}).One(foundUser))
 
 	var results []string
 	foundFriendReq := new(User)
@@ -113,7 +90,7 @@ func (c *MgoController) GetFriendReqs(uid string) []string {
 }
 
 //GetFriendsMgo ...
-func (c *MgoController) GetFriendsMgo(uid string) []string {
+func (c *PDUIDMgoController) GetFriendsMgo(uid string) []string {
 	foundUser := new(User)
 	ifErr(c.userCol.FindId(bson.ObjectIdHex(uid)).One(foundUser))
 
@@ -128,7 +105,7 @@ func (c *MgoController) GetFriendsMgo(uid string) []string {
 }
 
 // GetProfilesMgo ...
-func (c *MgoController) GetProfilesMgo(nameLike string) []UserProfile {
+func (c *PDUIDMgoController) GetProfilesMgo(nameLike string) []UserProfile {
 	var real []UserProfile
 
 	ifErr(c.userCol.EnsureIndexKey("nickname"))
@@ -143,24 +120,24 @@ func (c *MgoController) GetProfilesMgo(nameLike string) []UserProfile {
 }
 
 // AcceptReqMgo ...
-func (c *MgoController) AcceptReqMgo(msg FriendReqRequest) {
-	mgoRmFrmSetID(c.userCol, c.UID, "friendReqs", bson.ObjectIdHex(msg.FriendUID))
-	mgoAddToSetID(c.userCol, c.UID, "friends", bson.ObjectIdHex(msg.FriendUID))
-	mgoAddToSetID(c.userCol, bson.ObjectIdHex(msg.FriendUID), "friends", c.UID)
+func (c *PDUIDMgoController) AcceptReqMgo(msg FriendReqRequest) {
+	mgoRmFrmSet(c.userCol, c.UID, "friendReqs", bson.ObjectIdHex(msg.FriendUID))
+	mgoAddToSet(c.userCol, c.UID, "friends", bson.ObjectIdHex(msg.FriendUID))
+	mgoAddToSet(c.userCol, bson.ObjectIdHex(msg.FriendUID), "friends", c.UID)
 }
 
 // DeclineReqRequest ...
-func (c *MgoController) DeclineReqMgo(msg FriendReqRequest) {
-	mgoRmFrmSetID(c.userCol, c.UID, "friendReqs", bson.ObjectIdHex(msg.FriendUID))
+func (c *PDUIDMgoController) DeclineReqMgo(msg FriendReqRequest) {
+	mgoRmFrmSet(c.userCol, c.UID, "friendReqs", bson.ObjectIdHex(msg.FriendUID))
 }
 
 // SendReq ...
-func (c *MgoController) SendReqMgo(msg FriendReqRequest) {
-	mgoAddToSetID(c.userCol, bson.ObjectIdHex(msg.FriendUID), "friendReqs", c.UID)
+func (c *PDUIDMgoController) SendReqMgo(msg FriendReqRequest) {
+	mgoAddToSet(c.userCol, bson.ObjectIdHex(msg.FriendUID), "friendReqs", c.UID)
 }
 
 // RemoveFriend ...
-func (c *MgoController) RemoveFriendMgo(msg FriendReqRequest) {
-	mgoRmFrmSetID(c.userCol, c.UID, "friends", bson.ObjectIdHex(msg.FriendUID))
-	mgoRmFrmSetID(c.userCol, bson.ObjectIdHex(msg.FriendUID), "friends", c.UID)
+func (c *PDUIDMgoController) RemoveFriendMgo(msg FriendReqRequest) {
+	mgoRmFrmSet(c.userCol, c.UID, "friends", bson.ObjectIdHex(msg.FriendUID))
+	mgoRmFrmSet(c.userCol, bson.ObjectIdHex(msg.FriendUID), "friends", c.UID)
 }

@@ -16,9 +16,9 @@ func PhotoCreate(w http.ResponseWriter, r *http.Request) {
 
 	pid := bson.NewObjectId()
 
-	msg := SaveImageFile(pid.Hex(), ctrl.UID.Hex(), r)
+	aid := SaveImageFile(pid.Hex(), ctrl.UID.Hex(), r)
 
-	ctrl.InsertPhoto(*msg, pid)
+	ctrl.InsertPhoto(aid, pid)
 
 	defer r.Body.Close()
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")

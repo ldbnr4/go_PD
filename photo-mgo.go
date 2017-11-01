@@ -6,7 +6,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func (c *MgoController) InsertPhoto(msg AddPhotoMsg, id bson.ObjectId) {
+func (c *PDUIDMgoController) InsertPhoto(albumID, photoID bson.ObjectId) {
 	if msg.Album == "" {
 		panic("empty album")
 	}
@@ -15,10 +15,10 @@ func (c *MgoController) InsertPhoto(msg AddPhotoMsg, id bson.ObjectId) {
 
 	ifErr(c.photoCol.Insert(photObj))
 
-	mgoAddToSetID(c.albumCol, bson.ObjectIdHex(msg.Album), "photos", id)
+	mgoAddToSet(c.albumCol, bson.ObjectIdHex(msg.Album), "photos", id)
 }
 
-func (c *MgoController) DeletePhotosFrmAlbum(albumObj Album) {
+func (c *PDUIDMgoController) DeletePhotosFrmAlbum(albumObj Album) {
 	switch {
 	case albumObj.Host.Hex() == "":
 		panic("DeletePhotosFrmAlbum: empty user id")
@@ -29,7 +29,7 @@ func (c *MgoController) DeletePhotosFrmAlbum(albumObj Album) {
 	}
 }
 
-func (c *MgoController) DeletePhoto(delPicMsg DelPhotoMsg) {
+func (c *PDUIDMgoController) DeletePhoto(pid string) {
 	if delPicMsg.PID == "" {
 		panic("DeletePhoto: empty pic id")
 	}
@@ -43,7 +43,7 @@ func (c *MgoController) DeletePhoto(delPicMsg DelPhotoMsg) {
 
 	if picObj.Owner == c.UID || albumObj.Host == c.UID {
 		FSRemovePhoto(delPicMsg.PID, c.UID.Hex())
-		mgoRmFrmSetID(c.albumCol, picObj.Album, "photos", picObj.ObjectId)
+		mgoRmFrmSet(c.albumCol, picObj.Album, "photos", picObj.ObjectId)
 		ifErr(c.photoCol.RemoveId(PIDObj))
 	}
 

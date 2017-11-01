@@ -7,15 +7,15 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-type MgoController struct {
+type PDMgoController struct {
 	session                     *mgo.Session
 	userCol, albumCol, photoCol *mgo.Collection
 }
 
 // TODO: Use this type to handle all database interaction
-type PDMgoController struct {
-	MgoController
-	UID bson.ObjectId
+type PDUMgoController struct {
+	PDMgoController
+	User
 }
 
 type ControllerParam struct {
@@ -35,11 +35,11 @@ type ControllerParam struct {
 //     goji.Get("/user", ctl.getUser)
 //     goji.Serve()
 // }
-func getMgoController() MgoController {
+func getPDMgoController() PDMgoController {
 	session, err := mgo.Dial("localhost:27012")
 	ifErr(err)
 	db := session.DB("test")
-	return MgoController{
+	return PDMgoController{
 		session:  session,
 		userCol:  db.C("accnts"),
 		albumCol: db.C("albums"),
@@ -47,24 +47,21 @@ func getMgoController() MgoController {
 	}
 }
 
-func getPDController(r *http.Request) PDMgoController {
-	mgoCtrl := getMgoController()
+func getPDUController(r *http.Request) PDUMgoController {
+	mgoCtrl := getPDMgoController()
 	uidStr := r.Header.Get("UID")
 	if uidStr == "" {
 		panic("This route requires identification")
 	}
 	UID := bson.ObjectIdHex(uidStr)
-	count, err := mgoCtrl.userCol.FindId(UID).Count()
-	ifErr(err)
-	if count != 1 {
-		panic("Invalid identification")
-	}
-	return PDMgoController{mgoCtrl, UID}
+	var user User
+	ifErr(mgoCtrl.userCol.FindId(UID).One(user))
+	return PDUIDMgoController{mgoCtrl, user}
 }
 
 // TODO: make first parameter type{mgo.Collection, bson.ObjectId}
 //{ $addToSet: { <field1>: <value1>, (TODO:)... } }
-func mgoAddToSetID(collection *mgo.Collection, id bson.ObjectId, field string, value interface{}) {
+func mgoAddToSet(collection *mgo.Collection, id bson.ObjectId, field string, value interface{}) {
 
 	update := make(map[string]map[string]interface{})
 	op := make(map[string]interface{})
@@ -77,7 +74,7 @@ func mgoAddToSetID(collection *mgo.Collection, id bson.ObjectId, field string, v
 
 // TODO: make first parameter type{mgo.Collection, bson.ObjectId}
 //{ $pull: { <field1>: <value|(TODO:)condition>} }
-func mgoRmFrmSetID(collection *mgo.Collection, id bson.ObjectId, field string, value interface{}) {
+func mgoRmFrmSet(collection *mgo.Collection, id bson.ObjectId, field string, value interface{}) {
 
 	update := make(map[string]map[string]interface{})
 	op := make(map[string]interface{})

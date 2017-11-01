@@ -7,30 +7,40 @@ import (
 )
 
 type Album struct {
-	bson.ObjectId "_id"
-	Title         string
-	Host          bson.ObjectId
-	Creation      time.Time
-	Photos, Guest []bson.ObjectId
-}
-
-type AddAlbumResp struct {
-	Title string
-	AID   string
+	bson.ObjectId        "_id"
+	Title                string
+	HostID               bson.ObjectId
+	Creation             time.Time
+	PhotoList, GuestList []bson.ObjectId
 }
 
 //GetAlbumsResp ...
 type GetAlbumsResp struct {
-	Created []GetAlbumResp
-	Tagged  []GetAlbumResp
+	CreatedAlbums []GetAlbumResp
+	TaggedAlbums  []GetAlbumResp
 }
 
 //GetAlbumResp ...
 type GetAlbumResp struct {
-	Title string
-	ID    string
+	Title     string
+	AID       string
+	GuestList []string
+	PhotoList []string
+	Creation  time.Time
 }
 
-type AlbumCreateMsg struct {
+type AlbumIDMsg struct {
+	AID string
+}
+
+type AlbumTitleMsg struct {
 	Title string
+}
+
+type AlbumGuestListMsg struct {
+	GuestList []string
+}
+
+type AlbumPhotoListMsg struct {
+	PhotoList []string
 }

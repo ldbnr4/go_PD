@@ -10,7 +10,7 @@ var PhotoRoutes = []Route{
 	Route{
 		"PhotoDelete",
 		"POST",
-		"/del/photo",
+		"/photo/del",
 		PhotoDelete,
 	},
 	Route{
@@ -22,7 +22,7 @@ var PhotoRoutes = []Route{
 	Route{
 		"DevHero",
 		"GET",
-		"/dev/hero/{hero}",
+		"/photo/hero/{hero}",
 		DevHero,
 	},
 }

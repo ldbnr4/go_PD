@@ -3,10 +3,10 @@ package main
 // AlbumRoutes ...
 var AlbumRoutes = Routes{
 	Route{
-		"GetAlbum",
+		"GetAlbumPhotos",
 		"GET",
-		"/album/:AID",
-		GetAlbum,
+		"/album/photos/:AID",
+		GetAlbumPhotos,
 	},
 	Route{
 		"GetAlbums",
@@ -23,7 +23,7 @@ var AlbumRoutes = Routes{
 	Route{
 		"AlbumDelete",
 		"POST",
-		"/del/album",
+		"/album/del",
 		AlbumDelete,
 	},
 }

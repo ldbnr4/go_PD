@@ -64,15 +64,6 @@ func GetFriends(w http.ResponseWriter, r *http.Request) {
 			GetFriendsResponse{ctrl.GetFriendReqs(UID), ctrl.GetFriendsMgo(UID)}))
 }
 
-//GetAlbums ...
-func GetAlbums(w http.ResponseWriter, r *http.Request) {
-	UID := pat.Param(r, "UID")
-	ctrl := getPDController(r)
-	defer ctrl.session.Close()
-	aids := ctrl.GetUserAlbums(UID)
-	ifErr(json.NewEncoder(w).Encode(aids))
-}
-
 //SearchUser ...
 func SearchUser(w http.ResponseWriter, r *http.Request) {
 	nameLike := pat.Param(r, "NAME_LIKE")

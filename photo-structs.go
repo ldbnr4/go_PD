@@ -12,3 +12,7 @@ type Photo struct {
 	Owner         bson.ObjectId
 	Album         bson.ObjectId
 }
+
+type PhotoIDMsg struct {
+	PID string
+}

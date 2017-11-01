@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func SaveImageFile(pid, owner string, r *http.Request) *AddPhotoMsg {
+func SaveImageFile(pid, owner string, r *http.Request) string {
 	r.ParseMultipartForm(32 << 20)
 	msg := new(AddPhotoMsg)
 	FillStruct(r, msg)

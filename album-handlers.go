@@ -5,38 +5,48 @@ import (
 	//"fmt"
 
 	"net/http"
+
+	"goji.io/pat"
 )
 
 func AlbumCreate(w http.ResponseWriter, r *http.Request) {
-	var msg AlbumCreateMsg
+	var msg AlbumTitleMsg
 	FillStruct(r, msg)
-	ctrl := getPDController(r)
+	ctrl := getPDUIDController(r)
 	defer ctrl.session.Close()
 	aid := ctrl.InsertAlbum(msg.Title)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
-	ifErr(json.NewEncoder(w).Encode(&AddAlbumResp{AID: aid, Title: msg.Title}))
+	ifErr(json.NewEncoder(w).Encode(&AlbumIDMsg{AID: aid}))
 }
 
 //AlbumDelete ...
 func AlbumDelete(w http.ResponseWriter, r *http.Request) {
-	msg := new(AlbumMsgToken)
+	msg := new(AlbumIDMsg)
 	FillStruct(r, msg)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-	ctrl := getPDController(r)
+	ctrl := getPDUIDController(r)
 	defer ctrl.session.Close()
 	ctrl.RemoveAlbum(msg.AID)
 	ifErr(json.NewEncoder(w).Encode("Completed"))
 }
 
-//GetAlbum ...
-func GetAlbum(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDController(r)
+//GetAlbumPhotos ...
+func GetAlbumPhotos(w http.ResponseWriter, r *http.Request) {
+	aid := pat.Param(r, "AID")
+	ctrl := getPDUIDController(r)
 	defer ctrl.session.Close()
-	msg := AlbumMsgToken{AID: r.URL.Query().Get("AlbumId")}
-	pids := ctrl.GetAlbumPhotos(msg)
+	pids := ctrl.GetAlbumPhotos(aid)
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	ifErr(json.NewEncoder(w).Encode(&GetAlbumPIDsResp{PhotoIDs: pids}))
+	ifErr(json.NewEncoder(w).Encode(pids))
+}
+
+//GetAlbums ...
+func GetAlbums(w http.ResponseWriter, r *http.Request) {
+	ctrl := getPDUIDController(r)
+	defer ctrl.session.Close()
+	aids := ctrl.GetAlbumsMgo()
+	ifErr(json.NewEncoder(w).Encode(aids))
 }

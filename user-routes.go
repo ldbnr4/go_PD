@@ -29,7 +29,7 @@ var UserRoutes = Routes{
 	Route{
 		"UserDelete",
 		"POST",
-		"/del/user",
+		"/user/del",
 		UserDelete,
 	},
 	Route{
