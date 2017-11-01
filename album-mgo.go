@@ -9,32 +9,34 @@ import (
 )
 
 //InsertAlbum inserts a new album into the DB
-func (pdMgo *PDUIDMgoController) InsertAlbum(title string) string {
+func (ctrl *PDUMgoController) InsertAlbum(title string) string {
 	if title == "" {
 		panic("empty title")
 	}
 
-	newAlbum := Album{Title: title, HostID: pdMgo.UID, Creation: time.Now().UTC()}
+	newAlbum := Album{Title: title, HostID: ctrl.User.ObjectId, Creation: time.Now().UTC()}
 	newAlbum.ObjectId = bson.NewObjectId()
 
-	ifErr(pdMgo.albumCol.Insert(newAlbum))
+	ifErr(ctrl.albumCol.Insert(newAlbum))
 
-	mgoAddToSet(pdMgo.userCol, pdMgo.UID, "albums", newAlbum.ObjectId)
+	mgoAddToSet(ctrl.userCol, ctrl.User.ObjectId, "albums", newAlbum.ObjectId)
 
 	return newAlbum.ObjectId.Hex()
 }
 
 //RemoveAlbum removes an album from the DB
-func (ctrl *PDUIDMgoController) RemoveAlbum(aidStr string) {
+func (ctrl *PDUMgoController) RemoveAlbum(aidStr string) {
 	if aidStr == "" {
 		panic("empty album id")
 	}
-
 	aid := bson.ObjectIdHex(aidStr)
+	ctrl.RemoveAlbumInternal(aid)
+}
 
+func (ctrl *PDUMgoController) RemoveAlbumInternal(aid bson.ObjectId) {
 	album := getAlbumObj(aid, ctrl.albumCol)
 
-	mgoRmFrmSet(ctrl.userCol, ctrl.UID, "albums", aid)
+	mgoRmFrmSet(ctrl.userCol, ctrl.User.ObjectId, "albums", aid)
 
 	ctrl.DeletePhotosFrmAlbum(album)
 
@@ -42,14 +44,18 @@ func (ctrl *PDUIDMgoController) RemoveAlbum(aidStr string) {
 }
 
 //GetAlbumsMgo ...
-func (ctrl *PDUIDMgoController) GetAlbumsMgo() GetAlbumsResp {
-	foundUser := getUserObj(ctrl.UID, ctrl.userCol)
+func (ctrl *PDUMgoController) GetAlbumsMgo() GetAlbumsResp {
 
-	taggedList := foundUser.Tagged
+	// taggedList := foundUser.Tagged
 	var created []GetAlbumResp
-	for i, albumID := range foundUser.Albums {
+	for _, albumID := range ctrl.User.Albums {
 		album := getAlbumObj(albumID, ctrl.albumCol)
-		albumResp := GetAlbumResp{album.Title, albumID.Hex(), ctrl.GetGuestListAlbum(album), nil, album.Creation}
+		albumResp := GetAlbumResp{
+			album.Title,
+			albumID.Hex(),
+			ctrl.GetGuestListNickname(album),
+			nil, //TODO Fill this
+			album.Creation}
 		created = append(created, albumResp)
 	}
 
@@ -59,18 +65,19 @@ func (ctrl *PDUIDMgoController) GetAlbumsMgo() GetAlbumsResp {
 	// 	tagged[i] = GetAlbumResp{Title: album.Title, ID: albumID.Hex()}
 	// }
 
-	return GetAlbumsResp{created}
+	// TODO Fill this
+	return GetAlbumsResp{}
 }
 
-func (pdMgo *PDUIDMgoController) GetAlbumPhotos(AID string) []string {
-	if AID == "" {
+func (ctrl *PDUMgoController) GetAlbumPhotos(aidStr string) []string {
+	if aidStr == "" {
 		panic("Empty AlbumId in GetAlbumPhotos")
 	}
+	uid := ctrl.User.ObjectId
 
-	var albumObj Album
-	ifErr(pdMgo.albumCol.FindId(bson.ObjectIdHex(AID)).One(&albumObj))
-	if !onTheGuestList(albumObj, pdMgo.UID) && albumObj.HostID != pdMgo.UID {
-		panic(fmt.Sprintf("No access rights for the UID: %s to the album %s", pdMgo.UID, albumObj.Title))
+	albumObj := getAlbumObj(bson.ObjectIdHex(aidStr), ctrl.albumCol)
+	if !onTheGuestList(albumObj, uid) && albumObj.HostID != uid {
+		panic(fmt.Sprintf("No access rights for the UID: %s to the album %s", uid, albumObj.Title))
 	}
 
 	var pids []string
@@ -82,11 +89,10 @@ func (pdMgo *PDUIDMgoController) GetAlbumPhotos(AID string) []string {
 	return pids
 }
 
-func (ctrl *PDUIDMgoController) GetGuestListNickname(album Album) []string {
+func (ctrl *PDUMgoController) GetGuestListNickname(album Album) []string {
 	var guestNames []string
 	for _, guestUID := range album.GuestList {
-		var guestName string
-		ctrl.userCol.FindId(guestUID).Select(bson.M{"nickname": 1}).One(guestName)
+		guestName := getUserObj(guestUID, ctrl.userCol).Nickname
 		guestNames = append(guestNames, guestName)
 	}
 	return guestNames

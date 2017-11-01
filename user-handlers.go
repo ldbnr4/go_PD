@@ -11,11 +11,10 @@ import (
 
 //UserCreate ...
 func UserCreate(w http.ResponseWriter, r *http.Request) {
+	ctrl := getPDUController(r)
+	defer ctrl.session.Close()
 	msg := new(AddUserMsg)
 	FillStruct(r, msg)
-
-	ctrl := getPDController(r)
-	defer ctrl.session.Close()
 
 	insertResp := ctrl.InsertUser(*msg)
 	setUpUserDirectory(insertResp.ID)
@@ -26,20 +25,18 @@ func UserCreate(w http.ResponseWriter, r *http.Request) {
 
 //UserDelete ...
 func UserDelete(w http.ResponseWriter, r *http.Request) {
-	msg := new(DelUserMsg)
-	FillStruct(r, msg)
-	ctrl := getPDController(r)
+	ctrl := getPDUController(r)
 	defer ctrl.session.Close()
-	ctrl.RemoveUser(*msg)
+	ctrl.RemoveUser(r.PostFormValue("Password"))
 	ifErr(json.NewEncoder(w).Encode("Completed"))
 }
 
 //Login ...
 func Login(w http.ResponseWriter, r *http.Request) {
+	ctrl := getPDMgoController()
+	defer ctrl.session.Close()
 	msg := new(LoginMsg)
 	FillStruct(r, msg)
-	ctrl := getExposedController(r)
-	defer ctrl.session.Close()
 	ifErr(json.NewEncoder(w).Encode(ctrl.GetUser(*msg)))
 }
 
@@ -56,48 +53,41 @@ func ProfPic(w http.ResponseWriter, r *http.Request) {
 
 //GetFriends ...
 func GetFriends(w http.ResponseWriter, r *http.Request) {
-	UID := pat.Param(r, "UID")
-	ctrl := getPDController(r)
+	ctrl := getPDUController(r)
 	defer ctrl.session.Close()
 	ifErr(json.NewEncoder(w).
 		Encode(
-			GetFriendsResponse{ctrl.GetFriendReqs(UID), ctrl.GetFriendsMgo(UID)}))
+			GetFriendsResponse{ctrl.GetFriendReqs(), ctrl.GetFriendsMgo()}))
 }
 
 //SearchUser ...
 func SearchUser(w http.ResponseWriter, r *http.Request) {
-	nameLike := pat.Param(r, "NAME_LIKE")
-	ctrl := getPDController(r)
+	ctrl := getPDUController(r)
 	defer ctrl.session.Close()
+	nameLike := pat.Param(r, "NAME_LIKE")
 	fechedProfiles := ctrl.GetProfilesMgo(nameLike)
 	ifErr(json.NewEncoder(w).Encode(fechedProfiles))
 }
 
 func AcceptReq(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDController(r)
+	ctrl := getPDUController(r)
 	defer ctrl.session.Close()
-	var msg FriendReqRequest
-	FillStruct(r, msg)
-	ctrl.AcceptReqMgo(msg)
+	ctrl.AcceptReqMgo(r.PostFormValue("FUID"))
 	ifErr(json.NewEncoder(w).Encode("Completed"))
 }
 
 // DeclineReq ...
 func DeclineReq(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDController(r)
+	ctrl := getPDUController(r)
 	defer ctrl.session.Close()
-	var msg FriendReqRequest
-	FillStruct(r, msg)
-	ctrl.DeclineReqMgo(msg)
+	ctrl.DeclineReqMgo(r.PostFormValue("FUID"))
 	ifErr(json.NewEncoder(w).Encode("Completed"))
 }
 
 // SendReq ...
 func SendReq(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDController(r)
+	ctrl := getPDUController(r)
 	defer ctrl.session.Close()
-	var msg FriendReqRequest
-	FillStruct(r, msg)
-	ctrl.SendReqMgo(msg)
+	ctrl.SendReqMgo(r.PostFormValue("FUID"))
 	ifErr(json.NewEncoder(w).Encode("Completed"))
 }

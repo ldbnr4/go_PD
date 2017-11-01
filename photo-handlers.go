@@ -7,23 +7,17 @@ import (
 	"os"
 
 	"goji.io/pat"
-	"gopkg.in/mgo.v2/bson"
 )
 
 func PhotoCreate(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDController(r)
+	ctrl := getPDUController(r)
 	defer ctrl.session.Close()
-
-	pid := bson.NewObjectId()
-
-	aid := SaveImageFile(pid.Hex(), ctrl.UID.Hex(), r)
-
-	ctrl.InsertPhoto(aid, pid)
+	ctrl.InsertPhoto(getFile(r), r.PostFormValue("AID"))
 
 	defer r.Body.Close()
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
-	ifErr(json.NewEncoder(w).Encode(pid.Hex()))
+	ifErr(json.NewEncoder(w).Encode("Completed"))
 }
 
 //GetPhoto ...
@@ -48,10 +42,8 @@ func DevHero(w http.ResponseWriter, r *http.Request) {
 }
 
 func PhotoDelete(w http.ResponseWriter, r *http.Request) {
-	msg := new(DelPhotoMsg)
-	FillStruct(r, msg)
-	ctrl := getPDController(r)
+	ctrl := getPDUController(r)
 	defer ctrl.session.Close()
-	ctrl.DeletePhoto(*msg)
+	ctrl.DeletePhoto(r.PostFormValue("PID"))
 	ifErr(json.NewEncoder(w).Encode("Completed"))
 }

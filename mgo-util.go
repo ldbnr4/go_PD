@@ -56,7 +56,7 @@ func getPDUController(r *http.Request) PDUMgoController {
 	UID := bson.ObjectIdHex(uidStr)
 	var user User
 	ifErr(mgoCtrl.userCol.FindId(UID).One(user))
-	return PDUIDMgoController{mgoCtrl, user}
+	return PDUMgoController{mgoCtrl, user}
 }
 
 // TODO: make first parameter type{mgo.Collection, bson.ObjectId}

@@ -1,50 +1,57 @@
 package main
 
 import (
+	"mime/multipart"
 	"time"
 
 	"gopkg.in/mgo.v2/bson"
 )
 
-func (c *PDUIDMgoController) InsertPhoto(albumID, photoID bson.ObjectId) {
-	if msg.Album == "" {
+func (ctrl *PDUMgoController) InsertPhoto(file multipart.File, aidStr string) {
+	if aidStr == "" {
 		panic("empty album")
 	}
+	aid := bson.ObjectIdHex(aidStr)
+	pid := bson.NewObjectId()
 
-	photObj := Photo{ObjectId: id, Upload: time.Now().UTC(), Owner: c.UID, Album: bson.ObjectIdHex(msg.Album)}
+	SaveImageFile(file, ctrl.User.ObjectId.Hex(), pid.Hex())
 
-	ifErr(c.photoCol.Insert(photObj))
+	photObj := Photo{
+		pid,
+		time.Now().UTC(),
+		ctrl.User.ObjectId,
+		aid}
 
-	mgoAddToSet(c.albumCol, bson.ObjectIdHex(msg.Album), "photos", id)
+	ifErr(ctrl.photoCol.Insert(photObj))
+
+	mgoAddToSet(ctrl.albumCol, aid, "photos", pid)
 }
 
-func (c *PDUIDMgoController) DeletePhotosFrmAlbum(albumObj Album) {
+func (c *PDUMgoController) DeletePhotosFrmAlbum(albumObj Album) {
 	switch {
-	case albumObj.Host.Hex() == "":
+	case albumObj.HostID.Hex() == "":
 		panic("DeletePhotosFrmAlbum: empty user id")
 	}
-	for _, photoID := range albumObj.Photos {
-		FSRemovePhoto(photoID.Hex(), albumObj.Host.Hex())
+	for _, photoID := range albumObj.PhotoList {
+		FSRemovePhoto(photoID.Hex(), albumObj.HostID.Hex())
 		ifErr(c.photoCol.RemoveId(photoID))
 	}
 }
 
-func (c *PDUIDMgoController) DeletePhoto(pid string) {
-	if delPicMsg.PID == "" {
+func (ctrl *PDUMgoController) DeletePhoto(pidStr string) {
+	if pidStr == "" {
 		panic("DeletePhoto: empty pic id")
 	}
 
-	PIDObj := bson.ObjectIdHex(delPicMsg.PID)
-	picObj := new(Photo)
-	c.photoCol.FindId(PIDObj).One(picObj)
+	pid := bson.ObjectIdHex(pidStr)
+	picObj := getPhotoObj(pid, ctrl.photoCol)
+	albumObj := getAlbumObj(picObj.Album, ctrl.albumCol)
+	uid := ctrl.User.ObjectId
 
-	albumObj := new(Album)
-	c.albumCol.FindId(picObj.Album).One(albumObj)
-
-	if picObj.Owner == c.UID || albumObj.Host == c.UID {
-		FSRemovePhoto(delPicMsg.PID, c.UID.Hex())
-		mgoRmFrmSet(c.albumCol, picObj.Album, "photos", picObj.ObjectId)
-		ifErr(c.photoCol.RemoveId(PIDObj))
+	if picObj.Owner == uid || albumObj.HostID == uid {
+		FSRemovePhoto(pid.Hex(), uid.Hex())
+		mgoRmFrmSet(ctrl.albumCol, picObj.Album, "photos", picObj.ObjectId)
+		ifErr(ctrl.photoCol.RemoveId(pid))
 	}
 
 }
