@@ -16,13 +16,13 @@ var PhotoRoutes = []Route{
 	Route{
 		"GetPhoto",
 		"GET",
-		"/photo",
+		"/photo/:PID",
 		GetPhoto,
 	},
 	Route{
 		"DevHero",
 		"GET",
-		"/photo/hero/{hero}",
+		"/photo/hero/:hero",
 		DevHero,
 	},
 }

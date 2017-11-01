@@ -5,7 +5,7 @@ var UserRoutes = Routes{
 	Route{
 		"ProfPic",
 		"GET",
-		"/user/:UID",
+		"/user/pic/:UID",
 		ProfPic,
 	},
 	Route{
@@ -17,7 +17,7 @@ var UserRoutes = Routes{
 	Route{
 		"SearchUser",
 		"GET",
-		"/user/s/:NAME_LIKE",
+		"/user/search/:NAME_LIKE",
 		SearchUser,
 	},
 	Route{
@@ -35,19 +35,19 @@ var UserRoutes = Routes{
 	Route{
 		"Login",
 		"POST",
-		"/login",
+		"/user/login",
 		Login,
 	},
 	Route{
-		"AcceptFriendReq",
+		"AcceptFriendRequest",
 		"POST",
-		"/acpt",
+		"friend/acpt",
 		AcceptReq,
 	},
 	Route{
-		"DeclineFriendReq",
+		"DeclineFriendRequest",
 		"POST",
-		"/acpt",
+		"friend/decl",
 		DeclineReq,
 	},
 }

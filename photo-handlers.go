@@ -22,11 +22,13 @@ func PhotoCreate(w http.ResponseWriter, r *http.Request) {
 
 //GetPhoto ...
 func GetPhoto(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "public, max-age=31536000")
-	imageID := r.URL.Query().Get("imageId")
-	userID := r.URL.Query().Get("userId")
+	ctrl := getPDUController(r)
+	defer ctrl.session.Close()
 
-	f, err := os.Open(PrjDir + userID + "/" + imageID)
+	w.Header().Set("Cache-Control", "public, max-age=31536000")
+	pid := pat.Param(r, "PID")
+
+	f, err := os.Open(PrjDir + ctrl.User.ObjectId.Hex() + "/" + pid)
 	ifErr(err)
 	io.Copy(w, f)
 	defer f.Close()
