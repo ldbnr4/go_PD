@@ -8,15 +8,12 @@ import (
 )
 
 func AlbumCreate(w http.ResponseWriter, r *http.Request) {
-	msg := new(AddAlbumMsg)
-
+	var msg AlbumCreateMsg
 	FillStruct(r, msg)
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
-	ctrl := getController(r)
+	ctrl := getPDController(r)
 	defer ctrl.session.Close()
-	aid := ctrl.InsertAlbum(*msg)
+	aid := ctrl.InsertAlbum(msg.Title)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
 	ifErr(json.NewEncoder(w).Encode(&AddAlbumResp{AID: aid, Title: msg.Title}))
 }
@@ -27,15 +24,15 @@ func AlbumDelete(w http.ResponseWriter, r *http.Request) {
 	FillStruct(r, msg)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-	ctrl := getController(r)
+	ctrl := getPDController(r)
 	defer ctrl.session.Close()
-	ctrl.RemoveAlbum(*msg)
+	ctrl.RemoveAlbum(msg.AID)
 	ifErr(json.NewEncoder(w).Encode("Completed"))
 }
 
 //GetAlbum ...
 func GetAlbum(w http.ResponseWriter, r *http.Request) {
-	ctrl := getController(r)
+	ctrl := getPDController(r)
 	defer ctrl.session.Close()
 	msg := AlbumMsgToken{AID: r.URL.Query().Get("AlbumId")}
 	pids := ctrl.GetAlbumPhotos(msg)

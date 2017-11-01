@@ -5,13 +5,13 @@ var AlbumRoutes = Routes{
 	Route{
 		"GetAlbum",
 		"GET",
-		"/album",
+		"/album/:AID",
 		GetAlbum,
 	},
 	Route{
 		"GetAlbums",
 		"GET",
-		"/albums/:UID",
+		"/albums",
 		GetAlbums,
 	},
 	Route{

@@ -42,22 +42,22 @@ func (c *MgoController) InsertUser(msg AddUserMsg) AddUserResp {
 // RemoveUser ...
 // TODO:	~Remove user from all guest lists
 // 			~Remove user photos
-func (c *MgoController) RemoveUser(msg DelUserMsg) {
+func (pdMgo *PDMgoController) RemoveUser(msg DelUserMsg) {
 	var user User
-	ifErr(c.userCol.FindId(c.UID).One(&user))
+	ifErr(pdMgo.userCol.FindId(pdMgo.UID).One(&user))
 
 	if user.Password != msg.Password {
 		panic("Wrong password")
 	}
 
 	for _, friend := range user.Friends {
-		mgoRmFrmSetID(c.userCol, friend, "friends", user.ObjectId)
+		mgoRmFrmSetID(pdMgo.userCol, friend, "friends", user.ObjectId)
 	}
 
 	for _, album := range user.Albums {
-		c.RemoveAlbum(AlbumMsgToken{AID: album.Hex()})
+		pdMgo.RemoveAlbum(AlbumMsgToken{AID: album.Hex()})
 	}
-	userPath := PrjDir + c.UID.Hex()
+	userPath := PrjDir + pdMgo.UID.Hex()
 	ifErr(os.RemoveAll(userPath))
 	ifErr(c.userCol.RemoveId(c.UID))
 }

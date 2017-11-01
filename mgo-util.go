@@ -7,11 +7,20 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-// TODO: Use this type to handle all database interaction
 type MgoController struct {
 	session                     *mgo.Session
 	userCol, albumCol, photoCol *mgo.Collection
-	UID                         bson.ObjectId
+}
+
+// TODO: Use this type to handle all database interaction
+type PDMgoController struct {
+	MgoController
+	UID bson.ObjectId
+}
+
+type ControllerParam struct {
+	r        *http.Request
+	identify bool
 }
 
 // func (c *Controller) getUser(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -26,26 +35,31 @@ type MgoController struct {
 //     goji.Get("/user", ctl.getUser)
 //     goji.Serve()
 // }
-func getController(r *http.Request) *MgoController {
+func getMgoController() MgoController {
 	session, err := mgo.Dial("localhost:27012")
 	ifErr(err)
 	db := session.DB("test")
-	retCtrl := &MgoController{
+	return MgoController{
 		session:  session,
 		userCol:  db.C("accnts"),
 		albumCol: db.C("albums"),
 		photoCol: db.C("photos"),
 	}
+}
+
+func getPDController(r *http.Request) PDMgoController {
+	mgoCtrl := getMgoController()
 	uidStr := r.Header.Get("UID")
-	if uidStr != "" {
-		retCtrl.UID = bson.ObjectIdHex(uidStr)
-		count, err := retCtrl.userCol.FindId(retCtrl.UID).Count()
-		ifErr(err)
-		if count != 1 {
-			panic("Invalid UID")
-		}
+	if uidStr == "" {
+		panic("This route requires identification")
 	}
-	return retCtrl
+	UID := bson.ObjectIdHex(uidStr)
+	count, err := mgoCtrl.userCol.FindId(UID).Count()
+	ifErr(err)
+	if count != 1 {
+		panic("Invalid identification")
+	}
+	return PDMgoController{mgoCtrl, UID}
 }
 
 // TODO: make first parameter type{mgo.Collection, bson.ObjectId}

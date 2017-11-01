@@ -12,11 +12,3 @@ type Photo struct {
 	Owner         bson.ObjectId
 	Album         bson.ObjectId
 }
-
-type AddPhotoMsg struct {
-	Album string
-}
-
-type DelPhotoMsg struct {
-	PID string
-}

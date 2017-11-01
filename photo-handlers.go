@@ -11,7 +11,7 @@ import (
 )
 
 func PhotoCreate(w http.ResponseWriter, r *http.Request) {
-	ctrl := getController(r)
+	ctrl := getPDController(r)
 	defer ctrl.session.Close()
 
 	pid := bson.NewObjectId()
@@ -50,7 +50,7 @@ func DevHero(w http.ResponseWriter, r *http.Request) {
 func PhotoDelete(w http.ResponseWriter, r *http.Request) {
 	msg := new(DelPhotoMsg)
 	FillStruct(r, msg)
-	ctrl := getController(r)
+	ctrl := getPDController(r)
 	defer ctrl.session.Close()
 	ctrl.DeletePhoto(*msg)
 	ifErr(json.NewEncoder(w).Encode("Completed"))

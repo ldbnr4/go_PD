@@ -14,18 +14,9 @@ type Album struct {
 	Photos, Guest []bson.ObjectId
 }
 
-type AddAlbumMsg struct {
-	Title string
-}
-
 type AddAlbumResp struct {
 	Title string
 	AID   string
-}
-
-//GetAlbumPIDsResp ...
-type GetAlbumPIDsResp struct {
-	PhotoIDs []string
 }
 
 //GetAlbumsResp ...
@@ -40,7 +31,6 @@ type GetAlbumResp struct {
 	ID    string
 }
 
-//AlbumMsgToken ...
-type AlbumMsgToken struct {
-	AID string
+type AlbumCreateMsg struct {
+	Title string
 }

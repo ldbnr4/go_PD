@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"gopkg.in/mgo.v2/bson"
@@ -8,23 +9,23 @@ import (
 )
 
 //InsertAlbum inserts a new album into the DB
-func (c *MgoController) InsertAlbum(msg AddAlbumMsg) string {
-	if msg.Title == "" {
+func (pdMgo *PDMgoController) InsertAlbum(title string) string {
+	if title == "" {
 		panic("empty title")
 	}
 
-	newAlbum := Album{Title: msg.Title, Host: c.UID, Creation: time.Now().UTC()}
+	newAlbum := Album{Title: title, Host: pdMgo.UID, Creation: time.Now().UTC()}
 	newAlbum.ObjectId = bson.NewObjectId()
 
-	ifErr(c.albumCol.Insert(newAlbum))
+	ifErr(pdMgo.albumCol.Insert(newAlbum))
 
-	mgoAddToSetID(c.userCol, c.UID, "albums", newAlbum.ObjectId)
+	mgoAddToSetID(pdMgo.userCol, pdMgo.UID, "albums", newAlbum.ObjectId)
 
 	return newAlbum.ObjectId.Hex()
 }
 
 //RemoveAlbum removes an album from the DB
-func (c *MgoController) RemoveAlbum(msg AlbumMsgToken) {
+func (pdMgo *PDMgoController) RemoveAlbum(AID string) {
 	if msg.AID == "" {
 		panic("empty album id")
 	}
@@ -33,24 +34,24 @@ func (c *MgoController) RemoveAlbum(msg AlbumMsgToken) {
 
 	var albumObj Album
 
-	ifErr(c.albumCol.FindId(albumObjID).One(&albumObj))
+	ifErr(pdMgo.albumCol.FindId(albumObjID).One(&albumObj))
 
-	mgoRmFrmSetID(c.userCol, c.UID, "albums", albumObjID)
+	mgoRmFrmSetID(pdMgo.userCol, pdMgo.UID, "albums", albumObjID)
 
-	c.DeletePhotosFrmAlbum(albumObj)
+	pdMgo.DeletePhotosFrmAlbum(albumObj)
 
-	ifErr(c.albumCol.RemoveId(bson.ObjectIdHex(msg.AID)))
+	ifErr(pdMgo.albumCol.RemoveId(bson.ObjectIdHex(msg.AID)))
 }
 
-func (c *MgoController) GetAlbumPhotos(msg AlbumMsgToken) []string {
+func (pdMgo *PDMgoController) GetAlbumPhotos(msg AlbumMsgToken) []string {
 	if msg.AID == "" {
 		panic("Empty AlbumId in GetAlbumPhotos")
 	}
 
 	var albumObj Album
-	ifErr(c.albumCol.FindId(bson.ObjectIdHex(msg.AID)).One(&albumObj))
-	if !onTheGuestList(albumObj, c.UID) && albumObj.Host != c.UID {
-		panic("No access rights")
+	ifErr(pdMgo.albumCol.FindId(bson.ObjectIdHex(msg.AID)).One(&albumObj))
+	if !onTheGuestList(albumObj, pdMgo.UID) && albumObj.Host != pdMgo.UID {
+		panic(fmt.Sprintf("No access rights for the UID: %s to the album %s", pdMgo.UID, albumObj.Title))
 	}
 
 	var pids []string

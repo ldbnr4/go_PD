@@ -21,13 +21,13 @@ func setDefaultProfilePic(uid string) {
 
 	in, err := os.Open(src)
 	ifErr(err)
-	defer ifErr(in.Close())
 
 	out, err := os.Create(dst)
 	ifErr(err)
-	defer ifErr(out.Close())
 	// TODO: Error check that compares bytes written to original btyes of file
 	_, err = io.Copy(out, in)
 	ifErr(err)
 	ifErr(out.Sync())
+	defer ifErr(in.Close())
+	defer ifErr(out.Close())
 }
