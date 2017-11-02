@@ -7,7 +7,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func (ctrl *PDUMgoController) InsertPhoto(file multipart.File, aidStr string) {
+func (ctrl *Controller) InsertPhoto(file multipart.File, aidStr string) {
 	if aidStr == "" {
 		panic("empty album")
 	}
@@ -27,18 +27,7 @@ func (ctrl *PDUMgoController) InsertPhoto(file multipart.File, aidStr string) {
 	mgoAddToSet(ctrl.albumCol, aid, "photos", pid)
 }
 
-func (c *PDUMgoController) DeletePhotosFrmAlbum(albumObj Album) {
-	switch {
-	case albumObj.HostID.Hex() == "":
-		panic("DeletePhotosFrmAlbum: empty user id")
-	}
-	for _, photoID := range albumObj.PhotoList {
-		FSRemovePhoto(photoID.Hex(), albumObj.HostID.Hex())
-		ifErr(c.photoCol.RemoveId(photoID))
-	}
-}
-
-func (ctrl *PDUMgoController) DeletePhoto(pidStr string) {
+func (ctrl *Controller) DeletePhoto(pidStr string) {
 	if pidStr == "" {
 		panic("DeletePhoto: empty pic id")
 	}
@@ -49,7 +38,7 @@ func (ctrl *PDUMgoController) DeletePhoto(pidStr string) {
 	uid := ctrl.User.ObjectId
 
 	if picObj.Owner == uid || albumObj.HostID == uid {
-		FSRemovePhoto(pid.Hex(), uid.Hex())
+		removePhotoFile(pid.Hex(), uid.Hex())
 		mgoRmFrmSet(ctrl.albumCol, picObj.Album, "photos", picObj.ObjectId)
 		ifErr(ctrl.photoCol.RemoveId(pid))
 	}

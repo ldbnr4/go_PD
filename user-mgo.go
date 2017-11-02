@@ -1,8 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"time"
+
+	"gopkg.in/mgo.v2"
 
 	"gopkg.in/mgo.v2/bson"
 )
@@ -17,21 +20,11 @@ func newUser(msg AddUserMsg) User {
 	return newU
 }
 
-func (c *PDMgoController) checkIfUserExist(username, email string) CreateUserError {
-
-	usernameFind, err := c.userCol.Find(bson.M{"username": username}).Count()
-	ifErr(err)
-	emailFind, err := c.userCol.Find(bson.M{"email": email}).Count()
-	ifErr(err)
-
-	return CreateUserError{Username: usernameFind > 0, Email: emailFind > 0}
-}
-
 //InsertUser ...
-func (c *PDMgoController) InsertUser(msg AddUserMsg) AddUserResp {
+func (c *Controller) InsertUser(msg AddUserMsg) AddUserResp {
 	newUser := newUser(msg)
 
-	userDBCheck := c.checkIfUserExist(msg.Username, msg.Email)
+	userDBCheck := checkIfUserExist(msg.Username, msg.Email, c.userCol)
 
 	if !userDBCheck.Username && !userDBCheck.Email {
 		ifErr(c.userCol.Insert(newUser))
@@ -42,11 +35,11 @@ func (c *PDMgoController) InsertUser(msg AddUserMsg) AddUserResp {
 // RemoveUser ...
 // TODO:	~Remove user from all guest lists
 // 			~Remove user photos
-func (ctrl *PDUMgoController) RemoveUser(password string) {
+func (ctrl *Controller) RemoveUser(password string) {
 	user := ctrl.User
 
 	if user.Password != password {
-		panic("Wrong password")
+		panic(fmt.Sprintf("Can not remove user with %s", password))
 	}
 
 	for _, friend := range user.Friends {
@@ -62,18 +55,18 @@ func (ctrl *PDUMgoController) RemoveUser(password string) {
 }
 
 //GetUser ...
-func (ctrl *PDMgoController) GetUser(msg LoginMsg) interface{} {
+func (ctrl *Controller) GetUser(username, password string) interface{} {
 	var foundUser interface{}
-	ctrl.userCol.Find(bson.M{"username": msg.Username, "password": msg.Password}).One(foundUser)
+	ctrl.userCol.Find(bson.M{"username": username, "password": password}).One(&foundUser)
 
 	if foundUser == nil {
-		panic("No user found")
+		panic(fmt.Sprintf("No user found with username: %s and password: %s", username, password))
 	}
 	return foundUser
 }
 
 //GetFriendReqs ...
-func (ctrl *PDUMgoController) GetFriendReqs() []string {
+func (ctrl *Controller) GetFriendReqs() []string {
 
 	var results []string
 	for _, friendReqID := range ctrl.User.FriendReqs {
@@ -84,7 +77,7 @@ func (ctrl *PDUMgoController) GetFriendReqs() []string {
 }
 
 //GetFriendsMgo ...
-func (ctrl *PDUMgoController) GetFriendsMgo() []string {
+func (ctrl *Controller) GetFriendsMgo() []string {
 
 	var results []string
 	for _, friendID := range ctrl.User.Friends {
@@ -95,7 +88,7 @@ func (ctrl *PDUMgoController) GetFriendsMgo() []string {
 }
 
 // GetProfilesMgo ...
-func (c *PDUMgoController) GetProfilesMgo(nameLike string) []UserProfile {
+func (c *Controller) GetProfilesMgo(nameLike string) []UserProfile {
 	var real []UserProfile
 
 	ifErr(c.userCol.EnsureIndexKey("nickname"))
@@ -110,7 +103,7 @@ func (c *PDUMgoController) GetProfilesMgo(nameLike string) []UserProfile {
 }
 
 // AcceptReqMgo ...
-func (ctrl *PDUMgoController) AcceptReqMgo(fuidStr string) {
+func (ctrl *Controller) AcceptReqMgo(fuidStr string) {
 	fuid := bson.ObjectIdHex(fuidStr)
 	uid := ctrl.User.ObjectId
 	mgoRmFrmSet(ctrl.userCol, uid, "friendReqs", fuid)
@@ -119,19 +112,28 @@ func (ctrl *PDUMgoController) AcceptReqMgo(fuidStr string) {
 }
 
 // DeclineReqRequest ...
-func (ctrl *PDUMgoController) DeclineReqMgo(fuidStr string) {
+func (ctrl *Controller) DeclineReqMgo(fuidStr string) {
 	mgoRmFrmSet(ctrl.userCol, ctrl.User.ObjectId, "friendReqs", bson.ObjectIdHex(fuidStr))
 }
 
 // SendReq ...
-func (ctrl *PDUMgoController) SendReqMgo(fuidStr string) {
+func (ctrl *Controller) SendReqMgo(fuidStr string) {
 	mgoAddToSet(ctrl.userCol, bson.ObjectIdHex(fuidStr), "friendReqs", ctrl.User.ObjectId)
 }
 
 // RemoveFriend ...
-func (ctrl *PDUMgoController) RemoveFriendMgo(fuidStr string) {
+func (ctrl *Controller) RemoveFriendMgo(fuidStr string) {
 	uid := ctrl.User.ObjectId
 	fuid := bson.ObjectIdHex(fuidStr)
 	mgoRmFrmSet(ctrl.userCol, uid, "friends", fuid)
 	mgoRmFrmSet(ctrl.userCol, fuid, "friends", uid)
+}
+
+func checkIfUserExist(username, email string, userCol *mgo.Collection) CreateUserError {
+	usernameFind, err := userCol.Find(bson.M{"username": username}).Count()
+	ifErr(err)
+	emailFind, err := userCol.Find(bson.M{"email": email}).Count()
+	ifErr(err)
+
+	return CreateUserError{Username: usernameFind > 0, Email: emailFind > 0}
 }

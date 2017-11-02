@@ -11,7 +11,7 @@ import (
 
 //UserCreate ...
 func UserCreate(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	msg := new(AddUserMsg)
 	FillStruct(r, msg)
@@ -25,7 +25,7 @@ func UserCreate(w http.ResponseWriter, r *http.Request) {
 
 //UserDelete ...
 func UserDelete(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ctrl.RemoveUser(r.PostFormValue("Password"))
 	ifErr(json.NewEncoder(w).Encode("Completed"))
@@ -33,11 +33,12 @@ func UserDelete(w http.ResponseWriter, r *http.Request) {
 
 //Login ...
 func Login(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDMgoController()
+	ctrl := getController(r)
 	defer ctrl.session.Close()
-	msg := new(LoginMsg)
-	FillStruct(r, msg)
-	ifErr(json.NewEncoder(w).Encode(ctrl.GetUser(*msg)))
+	ifErr(json.NewEncoder(w).Encode(ctrl.GetUser(
+		r.PostFormValue("username"),
+		r.PostFormValue("password"),
+	)))
 }
 
 //ProfPic ...
@@ -53,7 +54,7 @@ func ProfPic(w http.ResponseWriter, r *http.Request) {
 
 //GetFriends ...
 func GetFriends(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ifErr(json.NewEncoder(w).
 		Encode(
@@ -62,7 +63,7 @@ func GetFriends(w http.ResponseWriter, r *http.Request) {
 
 //SearchUser ...
 func SearchUser(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	nameLike := pat.Param(r, "NAME_LIKE")
 	fechedProfiles := ctrl.GetProfilesMgo(nameLike)
@@ -70,7 +71,7 @@ func SearchUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func AcceptReq(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ctrl.AcceptReqMgo(r.PostFormValue("FUID"))
 	ifErr(json.NewEncoder(w).Encode("Completed"))
@@ -78,7 +79,7 @@ func AcceptReq(w http.ResponseWriter, r *http.Request) {
 
 // DeclineReq ...
 func DeclineReq(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ctrl.DeclineReqMgo(r.PostFormValue("FUID"))
 	ifErr(json.NewEncoder(w).Encode("Completed"))
@@ -86,7 +87,7 @@ func DeclineReq(w http.ResponseWriter, r *http.Request) {
 
 // SendReq ...
 func SendReq(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ctrl.SendReqMgo(r.PostFormValue("FUID"))
 	ifErr(json.NewEncoder(w).Encode("Completed"))

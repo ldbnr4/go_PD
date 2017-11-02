@@ -34,6 +34,12 @@ func NewMux() *goji.Mux {
 				mux2.HandleFunc(pat.Post(route.Pattern), handler)
 			}
 		}
+		mux2.HandleFunc(pat.Options(route.Pattern), http.HandlerFunc(
+			func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+				w.Header().Set("Access-Control-Allow-Headers", "UID")
+			},
+		))
 
 	}
 	return mux2

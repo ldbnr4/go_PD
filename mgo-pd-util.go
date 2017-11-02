@@ -7,18 +7,18 @@ import (
 
 func getAlbumObj(aid bson.ObjectId, collection *mgo.Collection) Album {
 	var album Album
-	ifErr(collection.FindId(aid).One(album))
+	ifErr(collection.FindId(aid).One(&album))
 	return album
 }
 
 func getUserObj(uid bson.ObjectId, collection *mgo.Collection) User {
 	var user User
-	ifErr(collection.FindId(uid).One(user))
+	ifErr(collection.FindId(uid).One(&user))
 	return user
 }
 
 func getPhotoObj(pid bson.ObjectId, collection *mgo.Collection) Photo {
 	var photo Photo
-	ifErr(collection.FindId(pid).One(photo))
+	ifErr(collection.FindId(pid).One(&photo))
 	return photo
 }

@@ -12,7 +12,7 @@ import (
 func AlbumCreate(w http.ResponseWriter, r *http.Request) {
 	var msg AlbumTitleMsg
 	FillStruct(r, msg)
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	aid := ctrl.InsertAlbum(msg.Title)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -26,7 +26,7 @@ func AlbumDelete(w http.ResponseWriter, r *http.Request) {
 	FillStruct(r, msg)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ctrl.RemoveAlbum(msg.AID)
 	ifErr(json.NewEncoder(w).Encode("Completed"))
@@ -35,7 +35,7 @@ func AlbumDelete(w http.ResponseWriter, r *http.Request) {
 //GetAlbumPhotos ...
 func GetAlbumPhotos(w http.ResponseWriter, r *http.Request) {
 	aid := pat.Param(r, "AID")
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	pids := ctrl.GetAlbumPhotos(aid)
 
@@ -45,7 +45,7 @@ func GetAlbumPhotos(w http.ResponseWriter, r *http.Request) {
 
 //GetAlbums ...
 func GetAlbums(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	aids := ctrl.GetAlbumsMgo()
 	ifErr(json.NewEncoder(w).Encode(aids))

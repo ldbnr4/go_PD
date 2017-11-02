@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"os"
 )
 
@@ -19,7 +20,7 @@ func SaveImageFile(file multipart.File, owner, pid string) {
 	io.Copy(f, file)
 }
 
-func FSRemovePhoto(pid, owner string) {
+func removePhotoFile(pid, owner string) {
 	switch {
 	case pid == "":
 		panic("RemovePhoto: empty pid")
@@ -28,4 +29,13 @@ func FSRemovePhoto(pid, owner string) {
 	}
 	path := PrjDir + owner + "/" + pid
 	ifErr(os.Remove(path))
+}
+
+func getFile(r *http.Request) multipart.File {
+	// TODO check if file is an image and what type
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		fmt.Println(err)
+	}
+	return file
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func PhotoCreate(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ctrl.InsertPhoto(getFile(r), r.PostFormValue("AID"))
 
@@ -22,7 +22,7 @@ func PhotoCreate(w http.ResponseWriter, r *http.Request) {
 
 //GetPhoto ...
 func GetPhoto(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 
 	w.Header().Set("Cache-Control", "public, max-age=31536000")
@@ -44,7 +44,7 @@ func DevHero(w http.ResponseWriter, r *http.Request) {
 }
 
 func PhotoDelete(w http.ResponseWriter, r *http.Request) {
-	ctrl := getPDUController(r)
+	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ctrl.DeletePhoto(r.PostFormValue("PID"))
 	ifErr(json.NewEncoder(w).Encode("Completed"))

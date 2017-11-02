@@ -9,7 +9,7 @@ import (
 )
 
 //InsertAlbum inserts a new album into the DB
-func (ctrl *PDUMgoController) InsertAlbum(title string) string {
+func (ctrl *Controller) InsertAlbum(title string) string {
 	if title == "" {
 		panic("empty title")
 	}
@@ -24,8 +24,7 @@ func (ctrl *PDUMgoController) InsertAlbum(title string) string {
 	return newAlbum.ObjectId.Hex()
 }
 
-//RemoveAlbum removes an album from the DB
-func (ctrl *PDUMgoController) RemoveAlbum(aidStr string) {
+func (ctrl *Controller) RemoveAlbum(aidStr string) {
 	if aidStr == "" {
 		panic("empty album id")
 	}
@@ -33,43 +32,24 @@ func (ctrl *PDUMgoController) RemoveAlbum(aidStr string) {
 	ctrl.RemoveAlbumInternal(aid)
 }
 
-func (ctrl *PDUMgoController) RemoveAlbumInternal(aid bson.ObjectId) {
+func (ctrl *Controller) RemoveAlbumInternal(aid bson.ObjectId) {
 	album := getAlbumObj(aid, ctrl.albumCol)
 
 	mgoRmFrmSet(ctrl.userCol, ctrl.User.ObjectId, "albums", aid)
 
-	ctrl.DeletePhotosFrmAlbum(album)
+	deletePhotosFrmAlbum(album, ctrl.MgoCollections)
 
 	ifErr(ctrl.albumCol.RemoveId(aid))
 }
 
 //GetAlbumsMgo ...
-func (ctrl *PDUMgoController) GetAlbumsMgo() GetAlbumsResp {
-
-	// taggedList := foundUser.Tagged
-	var created []GetAlbumResp
-	for _, albumID := range ctrl.User.Albums {
-		album := getAlbumObj(albumID, ctrl.albumCol)
-		albumResp := GetAlbumResp{
-			album.Title,
-			albumID.Hex(),
-			ctrl.GetGuestListNickname(album),
-			nil, //TODO Fill this
-			album.Creation}
-		created = append(created, albumResp)
-	}
-
-	// tagged := make([]GetAlbumResp, len(taggedList))
-	// for i, albumID := range taggedList {
-	// 	ifErr(ctrl.albumCol.Find(bson.M{"_id": albumID}).One(album))
-	// 	tagged[i] = GetAlbumResp{Title: album.Title, ID: albumID.Hex()}
-	// }
-
-	// TODO Fill this
-	return GetAlbumsResp{}
+func (ctrl *Controller) GetAlbumsMgo() GetAlbumsResp {
+	return GetAlbumsResp{
+		ctrl.makeAlbumResp(ctrl.User.Albums),
+		ctrl.makeAlbumResp(ctrl.User.Tagged)}
 }
 
-func (ctrl *PDUMgoController) GetAlbumPhotos(aidStr string) []string {
+func (ctrl *Controller) GetAlbumPhotos(aidStr string) []string {
 	if aidStr == "" {
 		panic("Empty AlbumId in GetAlbumPhotos")
 	}
@@ -89,11 +69,44 @@ func (ctrl *PDUMgoController) GetAlbumPhotos(aidStr string) []string {
 	return pids
 }
 
-func (ctrl *PDUMgoController) GetGuestListNickname(album Album) []string {
+func (ctrl *Controller) GetGuestListNickname(album Album) []string {
 	var guestNames []string
 	for _, guestUID := range album.GuestList {
 		guestName := getUserObj(guestUID, ctrl.userCol).Nickname
 		guestNames = append(guestNames, guestName)
 	}
 	return guestNames
+}
+
+func deletePhotosFrmAlbum(albumObj Album, collections MgoCollections) {
+	if albumObj.HostID.Hex() == "" {
+		panic("DeletePhotosFrmAlbum: host id empty")
+	}
+	for _, photoID := range albumObj.PhotoList {
+		removePhotoFile(photoID.Hex(), albumObj.HostID.Hex())
+		ifErr(collections.photoCol.RemoveId(photoID))
+	}
+}
+
+func (ctrl *Controller) getPIDStrs(pids []bson.ObjectId) []string {
+	var pidStrs []string
+	for _, pid := range pids {
+		pidStrs = append(pidStrs, pid.Hex())
+	}
+	return pidStrs
+}
+
+func (ctrl *Controller) makeAlbumResp(albums []bson.ObjectId) []GetAlbumResp {
+	var resp []GetAlbumResp
+	for _, albumID := range albums {
+		album := getAlbumObj(albumID, ctrl.albumCol)
+		albumResp := GetAlbumResp{
+			album.Title,
+			albumID.Hex(),
+			ctrl.GetGuestListNickname(album),
+			ctrl.GetAlbumPhotos(albumID.Hex()),
+			album.Creation}
+		resp = append(resp, albumResp)
+	}
+	return resp
 }

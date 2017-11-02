@@ -35,7 +35,7 @@ var UserRoutes = Routes{
 	Route{
 		"Login",
 		"POST",
-		"/user/login",
+		"/login",
 		Login,
 	},
 	Route{
