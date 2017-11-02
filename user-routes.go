@@ -38,16 +38,4 @@ var UserRoutes = Routes{
 		"/user",
 		Login,
 	},
-	Route{
-		"AcceptFriendRequest",
-		"POST",
-		"friend/acpt",
-		AcceptReq,
-	},
-	Route{
-		"DeclineFriendRequest",
-		"POST",
-		"friend/decl",
-		DeclineReq,
-	},
 }

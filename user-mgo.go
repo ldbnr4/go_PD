@@ -47,7 +47,7 @@ func (ctrl *Controller) RemoveUser(password string) {
 	}
 
 	for _, album := range user.Albums {
-		ctrl.RemoveAlbumInternal(album)
+		ctrl.removeAlbumInternal(album)
 	}
 	userPath := PrjDir + user.ObjectId.Hex()
 	ifErr(os.RemoveAll(userPath))
