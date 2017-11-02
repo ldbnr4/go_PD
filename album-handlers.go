@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	//"fmt"
 
 	"net/http"
 
@@ -10,33 +9,30 @@ import (
 )
 
 func AlbumCreate(w http.ResponseWriter, r *http.Request) {
-	var msg AlbumTitleMsg
-	FillStruct(r, msg)
 	ctrl := getController(r)
 	defer ctrl.session.Close()
-	aid := ctrl.InsertAlbum(msg.Title)
+	msg := r.PostFormValue("Title")
+	resp := ctrl.InsertAlbum(msg)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
-	ifErr(json.NewEncoder(w).Encode(&AlbumIDMsg{AID: aid}))
+	ifErr(json.NewEncoder(w).Encode(resp))
 }
 
 //AlbumDelete ...
 func AlbumDelete(w http.ResponseWriter, r *http.Request) {
-	msg := new(AlbumIDMsg)
-	FillStruct(r, msg)
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-
 	ctrl := getController(r)
 	defer ctrl.session.Close()
-	ctrl.RemoveAlbum(msg.AID)
+	msg := r.PostFormValue("AID")
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	ctrl.RemoveAlbum(msg)
 	ifErr(json.NewEncoder(w).Encode("Completed"))
 }
 
 //GetAlbumPhotos ...
 func GetAlbumPhotos(w http.ResponseWriter, r *http.Request) {
-	aid := pat.Param(r, "AID")
 	ctrl := getController(r)
 	defer ctrl.session.Close()
+	aid := pat.Param(r, "AID")
 	pids := ctrl.GetAlbumPhotos(aid)
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")

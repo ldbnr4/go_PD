@@ -9,19 +9,33 @@ import (
 )
 
 //InsertAlbum inserts a new album into the DB
-func (ctrl *Controller) InsertAlbum(title string) string {
+func (ctrl *Controller) InsertAlbum(title string) InsertAlbumResp {
+	var resp InsertAlbumResp
 	if title == "" {
 		panic("empty title")
 	}
+	for _, aid := range ctrl.User.Albums {
+		if getAlbumObj(aid, ctrl.albumCol).Title == title {
+			resp.Duplicate = true
+			return resp
+		}
+	}
 
-	newAlbum := Album{Title: title, HostID: ctrl.User.ObjectId, Creation: time.Now().UTC()}
-	newAlbum.ObjectId = bson.NewObjectId()
+	var objIdArray []bson.ObjectId
+	newAlbum := Album{
+		bson.NewObjectId(),
+		title,
+		ctrl.User.ObjectId,
+		time.Now().UTC(),
+		objIdArray,
+		objIdArray}
 
 	ifErr(ctrl.albumCol.Insert(newAlbum))
 
 	mgoAddToSet(ctrl.userCol, ctrl.User.ObjectId, "albums", newAlbum.ObjectId)
+	resp.ID = newAlbum.ObjectId.Hex()
 
-	return newAlbum.ObjectId.Hex()
+	return resp
 }
 
 func (ctrl *Controller) RemoveAlbum(aidStr string) {
@@ -29,10 +43,10 @@ func (ctrl *Controller) RemoveAlbum(aidStr string) {
 		panic("empty album id")
 	}
 	aid := bson.ObjectIdHex(aidStr)
-	ctrl.RemoveAlbumInternal(aid)
+	ctrl.removeAlbumInternal(aid)
 }
 
-func (ctrl *Controller) RemoveAlbumInternal(aid bson.ObjectId) {
+func (ctrl *Controller) removeAlbumInternal(aid bson.ObjectId) {
 	album := getAlbumObj(aid, ctrl.albumCol)
 
 	mgoRmFrmSet(ctrl.userCol, ctrl.User.ObjectId, "albums", aid)

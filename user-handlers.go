@@ -36,8 +36,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	ctrl := getController(r)
 	defer ctrl.session.Close()
 	ifErr(json.NewEncoder(w).Encode(ctrl.GetUser(
-		r.PostFormValue("username"),
-		r.PostFormValue("password"),
+		r.FormValue("username"),
+		r.FormValue("password"),
 	)))
 }
 
@@ -68,27 +68,4 @@ func SearchUser(w http.ResponseWriter, r *http.Request) {
 	nameLike := pat.Param(r, "NAME_LIKE")
 	fechedProfiles := ctrl.GetProfilesMgo(nameLike)
 	ifErr(json.NewEncoder(w).Encode(fechedProfiles))
-}
-
-func AcceptReq(w http.ResponseWriter, r *http.Request) {
-	ctrl := getController(r)
-	defer ctrl.session.Close()
-	ctrl.AcceptReqMgo(r.PostFormValue("FUID"))
-	ifErr(json.NewEncoder(w).Encode("Completed"))
-}
-
-// DeclineReq ...
-func DeclineReq(w http.ResponseWriter, r *http.Request) {
-	ctrl := getController(r)
-	defer ctrl.session.Close()
-	ctrl.DeclineReqMgo(r.PostFormValue("FUID"))
-	ifErr(json.NewEncoder(w).Encode("Completed"))
-}
-
-// SendReq ...
-func SendReq(w http.ResponseWriter, r *http.Request) {
-	ctrl := getController(r)
-	defer ctrl.session.Close()
-	ctrl.SendReqMgo(r.PostFormValue("FUID"))
-	ifErr(json.NewEncoder(w).Encode("Completed"))
 }

@@ -16,14 +16,14 @@ var AlbumRoutes = Routes{
 	},
 	Route{
 		"AlbumCreate",
-		"POST",
+		"PUT",
 		"/album",
 		AlbumCreate,
 	},
 	Route{
 		"AlbumDelete",
-		"POST",
-		"/album/del",
+		"DELTE",
+		"/album",
 		AlbumDelete,
 	},
 }

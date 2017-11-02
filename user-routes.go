@@ -22,20 +22,20 @@ var UserRoutes = Routes{
 	},
 	Route{
 		"UserCreate",
-		"POST",
+		"PUT",
 		"/user",
 		UserCreate,
 	},
 	Route{
 		"UserDelete",
-		"POST",
-		"/user/del",
+		"DELETE",
+		"/user",
 		UserDelete,
 	},
 	Route{
 		"Login",
-		"POST",
-		"/login",
+		"GET",
+		"/user",
 		Login,
 	},
 	Route{

@@ -3,14 +3,14 @@ package main
 var PhotoRoutes = []Route{
 	Route{
 		"PhotoCreate",
-		"POST",
+		"PUT",
 		"/photo",
 		PhotoCreate,
 	},
 	Route{
 		"PhotoDelete",
-		"POST",
-		"/photo/del",
+		"DELETE",
+		"/photo",
 		PhotoDelete,
 	},
 	Route{

@@ -29,18 +29,15 @@ type GetAlbumResp struct {
 	Creation  time.Time
 }
 
-type AlbumIDMsg struct {
-	AID string
-}
-
-type AlbumTitleMsg struct {
-	Title string
-}
-
 type AlbumGuestListMsg struct {
 	GuestList []string
 }
 
 type AlbumPhotoListMsg struct {
 	PhotoList []string
+}
+
+type InsertAlbumResp struct {
+	Duplicate bool
+	ID        string
 }

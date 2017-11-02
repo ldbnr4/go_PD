@@ -20,7 +20,8 @@ type Controller struct {
 func getController(r *http.Request) Controller {
 	session, err := mgo.Dial("localhost:27012")
 	ifErr(err)
-	db := session.DB("test")
+	envStr := r.Header.Get("ENV")
+	db := session.DB(envStr)
 	mgoCols := MgoCollections{
 		userCol:  db.C("accnts"),
 		albumCol: db.C("albums"),

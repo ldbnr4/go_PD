@@ -102,33 +102,6 @@ func (c *Controller) GetProfilesMgo(nameLike string) []UserProfile {
 	return real
 }
 
-// AcceptReqMgo ...
-func (ctrl *Controller) AcceptReqMgo(fuidStr string) {
-	fuid := bson.ObjectIdHex(fuidStr)
-	uid := ctrl.User.ObjectId
-	mgoRmFrmSet(ctrl.userCol, uid, "friendReqs", fuid)
-	mgoAddToSet(ctrl.userCol, uid, "friends", fuid)
-	mgoAddToSet(ctrl.userCol, fuid, "friends", uid)
-}
-
-// DeclineReqRequest ...
-func (ctrl *Controller) DeclineReqMgo(fuidStr string) {
-	mgoRmFrmSet(ctrl.userCol, ctrl.User.ObjectId, "friendReqs", bson.ObjectIdHex(fuidStr))
-}
-
-// SendReq ...
-func (ctrl *Controller) SendReqMgo(fuidStr string) {
-	mgoAddToSet(ctrl.userCol, bson.ObjectIdHex(fuidStr), "friendReqs", ctrl.User.ObjectId)
-}
-
-// RemoveFriend ...
-func (ctrl *Controller) RemoveFriendMgo(fuidStr string) {
-	uid := ctrl.User.ObjectId
-	fuid := bson.ObjectIdHex(fuidStr)
-	mgoRmFrmSet(ctrl.userCol, uid, "friends", fuid)
-	mgoRmFrmSet(ctrl.userCol, fuid, "friends", uid)
-}
-
 func checkIfUserExist(username, email string, userCol *mgo.Collection) CreateUserError {
 	usernameFind, err := userCol.Find(bson.M{"username": username}).Count()
 	ifErr(err)
