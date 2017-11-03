@@ -16,4 +16,9 @@ func FillStruct(r *http.Request, strct interface{}) {
 	var decoder = schema.NewDecoder()
 	ifErr(r.ParseForm())
 	ifErr(decoder.Decode(strct, r.PostForm))
+	for k := range r.PostForm {
+		if r.PostForm.Get(k) == "" {
+			panic("Bad message")
+		}
+	}
 }

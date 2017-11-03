@@ -24,6 +24,10 @@ func newUser(msg AddUserMsg) User {
 func (c *Controller) InsertUser(msg AddUserMsg) AddUserResp {
 	newUser := newUser(msg)
 
+	if msg.Username == "" || msg.Password == "" {
+		panic("Unidentifiable user")
+	}
+
 	userDBCheck := checkIfUserExist(msg.Username, msg.Email, c.userCol)
 
 	if !userDBCheck.Username && !userDBCheck.Email {
@@ -60,7 +64,7 @@ func (ctrl *Controller) GetUser(username, password string) interface{} {
 	ctrl.userCol.Find(bson.M{"username": username, "password": password}).One(&foundUser)
 
 	if foundUser == nil {
-		panic(fmt.Sprintf("No user found with username: %s and password: %s", username, password))
+		fmt.Sprintf("No user found with username: %s and password: %s", username, password)
 	}
 	return foundUser
 }
