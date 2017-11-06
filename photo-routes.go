@@ -3,7 +3,7 @@ package main
 var PhotoRoutes = []Route{
 	Route{
 		"PhotoCreate",
-		"PUT",
+		"POST",
 		"/photo",
 		PhotoCreate,
 	},

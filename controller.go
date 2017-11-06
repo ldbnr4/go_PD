@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	mgo "gopkg.in/mgo.v2"
@@ -21,6 +22,9 @@ func getController(r *http.Request) Controller {
 	session, err := mgo.Dial("localhost:27012")
 	ifErr(err)
 	envStr := r.Header.Get("ENV")
+	if envStr == "" {
+		panic("Environment not declared!")
+	}
 	db := session.DB(envStr)
 	mgoCols := MgoCollections{
 		userCol:  db.C("accnts"),
@@ -35,7 +39,7 @@ func getController(r *http.Request) Controller {
 	if !isExposedPath(r.URL.Path) {
 		uidStr := r.Header.Get("UID")
 		if uidStr == "" {
-			panic("This route requires identification!")
+			panic(fmt.Sprintf("Route %s requires identification!", r.URL.Path))
 		}
 		ctrl.User = getUserObj(bson.ObjectIdHex(uidStr), mgoCols.userCol)
 	}

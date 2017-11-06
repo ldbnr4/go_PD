@@ -24,7 +24,7 @@ func (ctrl *Controller) InsertPhoto(file multipart.File, aidStr string) {
 
 	ifErr(ctrl.photoCol.Insert(photObj))
 
-	mgoAddToSet(ctrl.albumCol, aid, "photos", pid)
+	mgoAddToSet(ctrl.albumCol, aid, "photolist", pid)
 }
 
 func (ctrl *Controller) DeletePhoto(pidStr string) {

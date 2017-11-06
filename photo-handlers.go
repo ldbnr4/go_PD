@@ -27,11 +27,8 @@ func GetPhoto(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Cache-Control", "public, max-age=31536000")
 	pid := pat.Param(r, "PID")
-
-	f, err := os.Open(PrjDir + ctrl.User.ObjectId.Hex() + "/" + pid)
-	ifErr(err)
-	io.Copy(w, f)
-	defer f.Close()
+	picPath := PrjDir + ctrl.User.ObjectId.Hex() + "/" + pid
+	serveFile(picPath, w)
 }
 
 //DevHero ...

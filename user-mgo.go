@@ -10,25 +10,26 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-func newUser(msg AddUserMsg) User {
-	newU := User{Joined: time.Now().UTC().String()}
-	newU.ObjectId = bson.NewObjectId()
-	newU.Nickname = msg.Nickname
-	newU.Email = msg.Email
-	newU.Username = msg.Username
-	newU.Password = msg.Password
-	return newU
-}
-
 //InsertUser ...
 func (c *Controller) InsertUser(msg AddUserMsg) AddUserResp {
-	newUser := newUser(msg)
+	newUser := User{
+		ObjectId: bson.NewObjectId(),
+		Username: msg.Username,
+		Email:    msg.Email,
+		Password: msg.Password,
+		UserProfile: UserProfile{
+			msg.Nickname,
+			time.Now().UTC().String(),
+		},
+	}
 
 	if msg.Username == "" || msg.Password == "" {
 		panic("Unidentifiable user")
 	}
 
 	userDBCheck := checkIfUserExist(msg.Username, msg.Email, c.userCol)
+	// fmt.Println("Checks from db~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+	// fmt.Println(userDBCheck)
 
 	if !userDBCheck.Username && !userDBCheck.Email {
 		ifErr(c.userCol.Insert(newUser))

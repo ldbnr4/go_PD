@@ -3,14 +3,12 @@ package main
 import "gopkg.in/mgo.v2/bson"
 
 // User ...
-// TODO: replace Joined and Nickname with UserProfile
 type User struct {
-	bson.ObjectId                       "_id"
-	Username                            string
-	Email                               string
-	Password                            string
-	Nickname                            string
-	Joined                              string
+	bson.ObjectId "_id"
+	Username      string
+	Email         string
+	Password      string
+	UserProfile
 	Friends, Albums, FriendReqs, Tagged []bson.ObjectId
 }
 

@@ -5,8 +5,6 @@ import (
 	"net/http"
 )
 
-// TODO: replace HandlerFunc with a new type that will consume a ctrl
-// func type example- type HandlerFunc func(ResponseWriter, *Request)
 type Route struct {
 	Name        string
 	Method      string

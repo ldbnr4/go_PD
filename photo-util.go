@@ -11,13 +11,36 @@ import (
 func SaveImageFile(file multipart.File, owner, pid string) {
 	path := PrjDir + owner + "/" + pid
 
-	defer file.Close()
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		fmt.Println(err)
+	ifErr(err)
+	copied, err := io.Copy(f, file)
+	ifErr(err)
+	fileInfo, err := f.Stat()
+	ifErr(err)
+	if fileInfo.Size() != copied {
+		panic("Did not properly save image!")
+	}
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		panic("Saved file is not on the disk!")
+	}
+	defer file.Close()
+	defer f.Close()
+}
+
+func serveFile(profPicPath string, w http.ResponseWriter) {
+	if _, err := os.Stat(profPicPath); os.IsNotExist(err) {
+		panic("This file does not exist!")
+	}
+	f, err := os.Open(profPicPath)
+	ifErr(err)
+	bytesCopied, err := io.Copy(w, f)
+	ifErr(err)
+	fileInfo, err := f.Stat()
+	ifErr(err)
+	if fileInfo.Size() != bytesCopied {
+		panic("Unable to send back all photo data to the client!")
 	}
 	defer f.Close()
-	io.Copy(f, file)
 }
 
 func removePhotoFile(pid, owner string) {

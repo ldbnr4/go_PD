@@ -2,9 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
-	"os"
 
 	"goji.io/pat"
 )
@@ -45,11 +43,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 func ProfPic(w http.ResponseWriter, r *http.Request) {
 	UID := pat.Param(r, "UID")
 
-	// TODO: check if UID is a valid UID
-	f, err := os.Open(PrjDir + UID + "/" + UID)
-	ifErr(err)
-	io.Copy(w, f)
-	defer f.Close()
+	profPicPath := PrjDir + UID + "/" + UID
+	serveFile(profPicPath, w)
 }
 
 //GetFriends ...
