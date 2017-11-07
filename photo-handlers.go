@@ -22,12 +22,16 @@ func PhotoCreate(w http.ResponseWriter, r *http.Request) {
 
 //GetPhoto ...
 func GetPhoto(w http.ResponseWriter, r *http.Request) {
+	uid := pat.Param(r, "UID")
+	env := pat.Param(r, "ENV")
+	r.Header.Set("UID", uid)
+	r.Header.Set("ENV", env)
 	ctrl := getController(r)
 	defer ctrl.session.Close()
 
-	w.Header().Set("Cache-Control", "public, max-age=31536000")
 	pid := pat.Param(r, "PID")
-	picPath := PrjDir + ctrl.User.ObjectId.Hex() + "/" + pid
+	picPath := PrjDir + ctrl.ServerUser.ObjectId.Hex() + "/" + pid
+	w.Header().Set("Cache-Control", "public, max-age=31536000")
 	serveFile(picPath, w)
 }
 

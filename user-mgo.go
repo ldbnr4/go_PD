@@ -11,8 +11,8 @@ import (
 )
 
 //InsertUser ...
-func (c *Controller) InsertUser(msg AddUserMsg) AddUserResp {
-	newUser := User{
+func (ctrl *Controller) InsertUser(msg AddUserMsg) AddUserResp {
+	newUser := ServerUser{
 		ObjectId: bson.NewObjectId(),
 		Username: msg.Username,
 		Email:    msg.Email,
@@ -27,12 +27,12 @@ func (c *Controller) InsertUser(msg AddUserMsg) AddUserResp {
 		panic("Unidentifiable user")
 	}
 
-	userDBCheck := checkIfUserExist(msg.Username, msg.Email, c.userCol)
+	userDBCheck := checkIfUserExist(msg.Username, msg.Email, ctrl.userCol)
 	// fmt.Println("Checks from db~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 	// fmt.Println(userDBCheck)
 
 	if !userDBCheck.Username && !userDBCheck.Email {
-		ifErr(c.userCol.Insert(newUser))
+		ifErr(ctrl.userCol.Insert(newUser))
 	}
 	return AddUserResp{ID: newUser.ObjectId.Hex(), Error: userDBCheck}
 }
@@ -41,7 +41,7 @@ func (c *Controller) InsertUser(msg AddUserMsg) AddUserResp {
 // TODO:	~Remove user from all guest lists
 // 			~Remove user photos
 func (ctrl *Controller) RemoveUser(password string) {
-	user := ctrl.User
+	user := ctrl.ServerUser
 
 	if user.Password != password {
 		panic(fmt.Sprintf("Can not remove user with %s", password))
@@ -60,45 +60,58 @@ func (ctrl *Controller) RemoveUser(password string) {
 }
 
 //GetUser ...
-func (ctrl *Controller) GetUser(username, password string) interface{} {
-	var foundUser interface{}
-	ctrl.userCol.Find(bson.M{"username": username, "password": password}).One(&foundUser)
+func (ctrl *Controller) GetUser(username, password string) ClientUser {
+	var foundUser ServerUser
+	ifErr(ctrl.userCol.Find(bson.M{"username": username, "password": password}).One(&foundUser))
 
-	if foundUser == nil {
-		fmt.Sprintf("No user found with username: %s and password: %s", username, password)
+	if foundUser.ObjectId.Hex() == "" {
+		fmt.Println(fmt.Sprintf("No user found with username: %s and password: %s", username, password))
 	}
-	return foundUser
+
+	return ClientUser{
+		ObjectID:           foundUser.ObjectId,
+		Email:              foundUser.Email,
+		UserProfile:        foundUser.UserProfile,
+		GetAlbumsResp:      getAlbumsRespInternal(foundUser, ctrl.albumCol),
+		GetFriendsResponse: getFriendsRespInternal(foundUser, ctrl.userCol),
+	}
+}
+
+func getFriendsRespInternal(user ServerUser, userCol *mgo.Collection) GetFriendsResponse {
+	return GetFriendsResponse{
+		FriendReqs: getUserNicknamesInternal(user.FriendReqs, userCol),
+		Friends:    getUserNicknamesInternal(user.FriendReqs, userCol),
+	}
 }
 
 //GetFriendReqs ...
 func (ctrl *Controller) GetFriendReqs() []string {
+	return getUserNicknamesInternal(ctrl.ServerUser.FriendReqs, ctrl.albumCol)
+}
 
+func getUserNicknamesInternal(uids []bson.ObjectId, userCol *mgo.Collection) []string {
 	var results []string
-	for _, friendReqID := range ctrl.User.FriendReqs {
-		results = append(results, getUserObj(friendReqID, ctrl.userCol).Nickname)
+	for _, friendReqID := range uids {
+		results = append(results, getUserObj(friendReqID, userCol).Nickname)
 	}
 
 	return results
+
 }
 
 //GetFriendsMgo ...
 func (ctrl *Controller) GetFriendsMgo() []string {
+	return getUserNicknamesInternal(ctrl.Friends, ctrl.userCol)
 
-	var results []string
-	for _, friendID := range ctrl.User.Friends {
-		results = append(results, getUserObj(friendID, ctrl.userCol).Nickname)
-	}
-
-	return results
 }
 
 // GetProfilesMgo ...
-func (c *Controller) GetProfilesMgo(nameLike string) []UserProfile {
+func (ctrl *Controller) GetProfilesMgo(nameLike string) []UserProfile {
 	var real []UserProfile
 
-	ifErr(c.userCol.EnsureIndexKey("nickname"))
+	ifErr(ctrl.userCol.EnsureIndexKey("nickname"))
 	ifErr(
-		c.userCol.Find(
+		ctrl.userCol.Find(
 			bson.M{"nickname": &bson.RegEx{Pattern: "^" + nameLike, Options: "i"}}).
 			Select(
 				bson.M{"joined": 1, "nickname": 1}).

@@ -11,8 +11,8 @@ func getAlbumObj(aid bson.ObjectId, collection *mgo.Collection) Album {
 	return album
 }
 
-func getUserObj(uid bson.ObjectId, collection *mgo.Collection) User {
-	var user User
+func getUserObj(uid bson.ObjectId, collection *mgo.Collection) ServerUser {
+	var user ServerUser
 	ifErr(collection.FindId(uid).One(&user))
 	return user
 }

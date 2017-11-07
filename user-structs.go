@@ -2,14 +2,23 @@ package main
 
 import "gopkg.in/mgo.v2/bson"
 
-// User ...
-type User struct {
+// ServerUser ...
+type ServerUser struct {
 	bson.ObjectId "_id"
 	Username      string
 	Email         string
 	Password      string
 	UserProfile
 	Friends, Albums, FriendReqs, Tagged []bson.ObjectId
+}
+
+//ClientUser
+type ClientUser struct {
+	ObjectID bson.ObjectId
+	Email    string
+	UserProfile
+	GetFriendsResponse
+	GetAlbumsResp
 }
 
 // CreateUserError ...

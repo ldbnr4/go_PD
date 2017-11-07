@@ -16,14 +16,13 @@ type Album struct {
 
 //GetAlbumsResp ...
 type GetAlbumsResp struct {
-	CreatedAlbums []GetAlbumResp
-	TaggedAlbums  []GetAlbumResp
+	CreatedAlbums map[string]GetAlbumResp
+	TaggedAlbums  map[string]GetAlbumResp
 }
 
 //GetAlbumResp ...
 type GetAlbumResp struct {
 	Title     string
-	AID       string
 	GuestList []string
 	PhotoList []string
 	Creation  time.Time

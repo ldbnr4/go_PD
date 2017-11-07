@@ -14,12 +14,12 @@ func (ctrl *Controller) InsertPhoto(file multipart.File, aidStr string) {
 	aid := bson.ObjectIdHex(aidStr)
 	pid := bson.NewObjectId()
 
-	SaveImageFile(file, ctrl.User.ObjectId.Hex(), pid.Hex())
+	SaveImageFile(file, ctrl.ServerUser.ObjectId.Hex(), pid.Hex())
 
 	photObj := Photo{
 		pid,
 		time.Now().UTC(),
-		ctrl.User.ObjectId,
+		ctrl.ServerUser.ObjectId,
 		aid}
 
 	ifErr(ctrl.photoCol.Insert(photObj))
@@ -35,7 +35,7 @@ func (ctrl *Controller) DeletePhoto(pidStr string) {
 	pid := bson.ObjectIdHex(pidStr)
 	picObj := getPhotoObj(pid, ctrl.photoCol)
 	albumObj := getAlbumObj(picObj.Album, ctrl.albumCol)
-	uid := ctrl.User.ObjectId
+	uid := ctrl.ServerUser.ObjectId
 
 	if picObj.Owner == uid || albumObj.HostID == uid {
 		removePhotoFile(pid.Hex(), uid.Hex())

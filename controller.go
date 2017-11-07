@@ -15,7 +15,7 @@ type MgoCollections struct {
 type Controller struct {
 	session *mgo.Session
 	MgoCollections
-	User
+	ServerUser
 }
 
 func getController(r *http.Request) Controller {
@@ -41,7 +41,7 @@ func getController(r *http.Request) Controller {
 		if uidStr == "" {
 			panic(fmt.Sprintf("Route %s requires identification!", r.URL.Path))
 		}
-		ctrl.User = getUserObj(bson.ObjectIdHex(uidStr), mgoCols.userCol)
+		ctrl.ServerUser = getUserObj(bson.ObjectIdHex(uidStr), mgoCols.userCol)
 	}
 	return ctrl
 }

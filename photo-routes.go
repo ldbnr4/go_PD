@@ -16,7 +16,7 @@ var PhotoRoutes = []Route{
 	Route{
 		"GetPhoto",
 		"GET",
-		"/photo/:PID",
+		"/photo/:PID/:UID/:ENV",
 		GetPhoto,
 	},
 	Route{
