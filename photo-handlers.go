@@ -29,8 +29,10 @@ func GetPhoto(w http.ResponseWriter, r *http.Request) {
 	ctrl := getController(r)
 	defer ctrl.session.Close()
 
-	pid := pat.Param(r, "PID")
-	picPath := PrjDir + ctrl.ServerUser.ObjectId.Hex() + "/" + pid
+	pidStr := pat.Param(r, "PID")
+	pid := convertToObjectID(pidStr)
+	photoObj := getPhotoObj(pid, ctrl.photoCol)
+	picPath := PrjDir + photoObj.Owner.Hex() + "/" + pidStr
 	w.Header().Set("Cache-Control", "public, max-age=31536000")
 	serveFile(picPath, w)
 }
@@ -49,4 +51,20 @@ func PhotoDelete(w http.ResponseWriter, r *http.Request) {
 	defer ctrl.session.Close()
 	ctrl.DeletePhoto(r.PostFormValue("PID"))
 	ifErr(json.NewEncoder(w).Encode("Completed"))
+}
+
+func profPic(w http.ResponseWriter, r *http.Request) {
+	nickname := pat.Param(r, "NICKNAME")
+	UID := pat.Param(r, "UID")
+	ENV := pat.Param(r, "ENV")
+	r.Header.Set("UID", UID)
+	r.Header.Set("ENV", ENV)
+
+	ctrl := getController(r)
+	defer ctrl.session.Close()
+
+	uidStr := ctrl.getUIDFromNickname(nickname).Hex()
+
+	profPicPath := PrjDir + uidStr + "/" + uidStr
+	serveFile(profPicPath, w)
 }

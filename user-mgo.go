@@ -34,7 +34,7 @@ func (ctrl *Controller) InsertUser(msg AddUserMsg) AddUserResp {
 	if !userDBCheck.Username && !userDBCheck.Email {
 		ifErr(ctrl.userCol.Insert(newUser))
 	}
-	return AddUserResp{ID: newUser.ObjectId.Hex(), Error: userDBCheck}
+	return AddUserResp{ClientUser: ctrl.convertServerToClient(newUser), Error: userDBCheck}
 }
 
 // RemoveUser ...
@@ -68,54 +68,53 @@ func (ctrl *Controller) GetUser(username, password string) ClientUser {
 		fmt.Println(fmt.Sprintf("No user found with username: %s and password: %s", username, password))
 	}
 
-	return ClientUser{
-		ObjectID:           foundUser.ObjectId,
-		Email:              foundUser.Email,
-		UserProfile:        foundUser.UserProfile,
-		GetAlbumsResp:      getAlbumsRespInternal(foundUser, ctrl.albumCol),
-		GetFriendsResponse: getFriendsRespInternal(foundUser, ctrl.userCol),
-	}
+	return ctrl.convertServerToClient(foundUser)
 }
 
 func getFriendsRespInternal(user ServerUser, userCol *mgo.Collection) GetFriendsResponse {
 	return GetFriendsResponse{
-		FriendReqs: getUserNicknamesInternal(user.FriendReqs, userCol),
-		Friends:    getUserNicknamesInternal(user.FriendReqs, userCol),
+		FriendReqs: getUserProfiles(user.FriendReqs, userCol),
+		Friends:    getUserProfiles(user.FriendReqs, userCol),
 	}
 }
 
 //GetFriendReqs ...
-func (ctrl *Controller) GetFriendReqs() []string {
-	return getUserNicknamesInternal(ctrl.ServerUser.FriendReqs, ctrl.albumCol)
+func (ctrl *Controller) GetFriendReqs() []UserProfile {
+	return getUserProfiles(ctrl.ServerUser.FriendReqs, ctrl.userCol)
 }
 
-func getUserNicknamesInternal(uids []bson.ObjectId, userCol *mgo.Collection) []string {
-	var results []string
+func getUserProfiles(uids []bson.ObjectId, userCol *mgo.Collection) []UserProfile {
+	var results []UserProfile
 	for _, friendReqID := range uids {
-		results = append(results, getUserObj(friendReqID, userCol).Nickname)
+		results = append(results, getUserObj(friendReqID, userCol).UserProfile)
 	}
-
 	return results
-
 }
 
 //GetFriendsMgo ...
-func (ctrl *Controller) GetFriendsMgo() []string {
-	return getUserNicknamesInternal(ctrl.Friends, ctrl.userCol)
+func (ctrl *Controller) GetFriendsMgo() []UserProfile {
+	return getUserProfiles(ctrl.Friends, ctrl.userCol)
 
 }
 
 // GetProfilesMgo ...
 func (ctrl *Controller) GetProfilesMgo(nameLike string) []UserProfile {
-	var real []UserProfile
+	var buffer []map[string]map[string]string
 
-	ifErr(ctrl.userCol.EnsureIndexKey("nickname"))
+	ifErr(ctrl.userCol.EnsureIndexKey("userprofile.nickname"))
 	ifErr(
 		ctrl.userCol.Find(
-			bson.M{"nickname": &bson.RegEx{Pattern: "^" + nameLike, Options: "i"}}).
+			bson.M{"userprofile.nickname": bson.RegEx{Pattern: "^" + nameLike, Options: "i"}}).
 			Select(
-				bson.M{"joined": 1, "nickname": 1}).
-			All(&real))
+				bson.M{"userprofile.joined": true, "userprofile.nickname": true}).
+			All(&buffer))
+	var real []UserProfile
+	for _, profile := range buffer {
+		real = append(real, UserProfile{
+			profile["userprofile"]["nickname"],
+			profile["userprofile"]["joined"],
+		})
+	}
 
 	return real
 }
@@ -127,4 +126,10 @@ func checkIfUserExist(username, email string, userCol *mgo.Collection) CreateUse
 	ifErr(err)
 
 	return CreateUserError{Username: usernameFind > 0, Email: emailFind > 0}
+}
+
+func (ctrl Controller) getUIDFromNickname(nickname string) bson.ObjectId {
+	uid := make(map[string]bson.ObjectId)
+	ifErr(ctrl.userCol.Find(bson.M{"userprofile.nickname": nickname}).Select(bson.M{"_id": 1}).One(&uid))
+	return uid["_id"]
 }

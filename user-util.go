@@ -31,3 +31,13 @@ func setDefaultProfilePic(uid string) {
 	defer ifErr(in.Close())
 	defer ifErr(out.Close())
 }
+
+func (ctrl *Controller) convertServerToClient(user ServerUser) ClientUser {
+	return ClientUser{
+		ObjectID:           user.ObjectId,
+		Email:              user.Email,
+		UserProfile:        user.UserProfile,
+		GetAlbumsResp:      getAlbumsRespInternal(user, ctrl.albumCol),
+		GetFriendsResponse: getFriendsRespInternal(user, ctrl.userCol),
+	}
+}

@@ -25,4 +25,10 @@ var PhotoRoutes = []Route{
 		"/photo/hero/:hero",
 		DevHero,
 	},
+	Route{
+		"ProfPic",
+		"GET",
+		"/photo/prof/:NICKNAME/:UID/:ENV",
+		profPic,
+	},
 }

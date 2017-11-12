@@ -30,3 +30,7 @@ func mgoRmFrmSet(collection *mgo.Collection, id bson.ObjectId, field string, val
 	ifErr(collection.UpdateId(id, update))
 
 }
+
+func convertToObjectID(idStr string) bson.ObjectId {
+	return bson.ObjectIdHex(idStr)
+}

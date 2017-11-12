@@ -15,7 +15,7 @@ func UserCreate(w http.ResponseWriter, r *http.Request) {
 	FillStruct(r, msg)
 
 	insertResp := ctrl.InsertUser(*msg)
-	setUpUserDirectory(insertResp.ID)
+	setUpUserDirectory(insertResp.ClientUser.ObjectID.Hex())
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	ifErr(json.NewEncoder(w).Encode(insertResp))
@@ -37,14 +37,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		r.FormValue("username"),
 		r.FormValue("password"),
 	)))
-}
-
-//ProfPic ...
-func ProfPic(w http.ResponseWriter, r *http.Request) {
-	UID := pat.Param(r, "UID")
-
-	profPicPath := PrjDir + UID + "/" + UID
-	serveFile(profPicPath, w)
 }
 
 //GetFriends ...

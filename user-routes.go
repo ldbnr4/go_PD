@@ -3,12 +3,6 @@ package main
 // UserRoutes ...
 var UserRoutes = Routes{
 	Route{
-		"ProfPic",
-		"GET",
-		"/user/pic/:UID",
-		ProfPic,
-	},
-	Route{
 		"GetFriends",
 		"GET",
 		"/friends/:UID",

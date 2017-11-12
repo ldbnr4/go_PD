@@ -11,10 +11,12 @@ func getAlbumObj(aid bson.ObjectId, collection *mgo.Collection) Album {
 	return album
 }
 
+// TODO FIX THIS
 func getUserObj(uid bson.ObjectId, collection *mgo.Collection) ServerUser {
-	var user ServerUser
-	ifErr(collection.FindId(uid).One(&user))
-	return user
+	// var buffer map[string]map[string]string
+	var buffer *ServerUser
+	ifErr(collection.FindId(uid).One(&buffer))
+	return *buffer
 }
 
 func getPhotoObj(pid bson.ObjectId, collection *mgo.Collection) Photo {

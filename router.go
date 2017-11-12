@@ -52,6 +52,7 @@ func getAllRoutes() []Route {
 		AlbumRoutes,
 		UserRoutes,
 		PhotoRoutes,
+		FriendRoutes,
 	}
 
 	var retRoutes []Route

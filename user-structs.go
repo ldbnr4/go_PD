@@ -4,11 +4,11 @@ import "gopkg.in/mgo.v2/bson"
 
 // ServerUser ...
 type ServerUser struct {
-	bson.ObjectId "_id"
-	Username      string
-	Email         string
-	Password      string
-	UserProfile
+	bson.ObjectId                       "_id"
+	Username                            string "username"
+	Email                               string "email"
+	Password                            string "password"
+	UserProfile                         "userprofile"
 	Friends, Albums, FriendReqs, Tagged []bson.ObjectId
 }
 
@@ -38,8 +38,8 @@ type AddUserMsg struct {
 
 // AddUserResp ...
 type AddUserResp struct {
-	Error CreateUserError
-	ID    string
+	Error      CreateUserError
+	ClientUser ClientUser
 }
 
 // LoginMsg ...
@@ -50,8 +50,8 @@ type LoginMsg struct {
 
 // GetFriendsResponse ...
 type GetFriendsResponse struct {
-	FriendReqs []string
-	Friends    []string
+	FriendReqs []UserProfile
+	Friends    []UserProfile
 }
 
 // UserProfile ...

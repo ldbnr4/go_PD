@@ -3,6 +3,12 @@ package main
 // AlbumRoutes ...
 var FriendRoutes = Routes{
 	Route{
+		"NetworkRelation",
+		"GET",
+		"/friend/relation/:nickname",
+		networkRelation,
+	},
+	Route{
 		"ConnectFriend",
 		"POST",
 		"/friend/connect",
@@ -22,7 +28,7 @@ var FriendRoutes = Routes{
 	},
 	Route{
 		"DisconnectFriend",
-		"DELTE",
+		"POST",
 		"/friend/disconnect",
 		DisconnectFriend,
 	},
